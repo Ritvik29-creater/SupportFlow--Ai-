@@ -87,6 +87,7 @@ Current query: {state["user_query"]}
 {sentiment_hint}
 
 Rules:
+- If recent assistant message offered refund or compensation options (e.g. wallet vs voucher or confirmation) and user replies with their choice (e.g. "wallet", "voucher", "yes", "confirm", "proceed", "option 1", "option 2"), classify as "refund"
 - If message mentions both tracking AND refund, prefer "refund" if customer explicitly asks for money back
 - If message mentions payment issue AND refund, prefer "payment" if no explicit refund request
 - If message is about a rude/threatening delivery person, always use "delivery_partner"

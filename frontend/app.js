@@ -238,11 +238,11 @@ chatForm.addEventListener("submit", async (e) => {
       { action: "error", confidence: 0 }
     );
     setOffline();
+  } finally {
+    IS_WAITING = false;
+    sendBtn.disabled = false;
+    userInput.focus();
   }
-
-  IS_WAITING = false;
-  sendBtn.disabled = false;
-  userInput.focus();
 });
 
 
@@ -431,6 +431,9 @@ function appendBotMsg(text, meta = {}) {
   const row = document.createElement("div");
   row.className = "msg-row bot";
 
+  const textStr = typeof text === "string" ? text : (text != null ? String(text) : "");
+  const textLower = textStr.toLowerCase();
+
   const intent = meta.intent || "general_support";
   const intMeta = INTENT_META[intent] || INTENT_META.general_support;
 
@@ -512,19 +515,50 @@ function appendBotMsg(text, meta = {}) {
       </div>`;
   }
 
+  // Voucher Toast Card
+  let voucherHtml = "";
+  const voucherMatch = textStr.match(/`([A-Z0-9]{3,}-[A-Z0-9]+)`/);
+  if (voucherMatch && (textLower.includes("voucher") || textLower.includes("coupon") || textLower.includes("courtesy") || textLower.includes("warm25") || textLower.includes("ontime"))) {
+    const vCode = voucherMatch[1];
+    voucherHtml = `
+      <div class="voucher-toast-card">
+        <div class="voucher-toast-icon">🎟️</div>
+        <div class="voucher-toast-details">
+          <div class="voucher-toast-title">APOLOGY VOUCHER ISSUED</div>
+          <div class="voucher-toast-code" onclick="navigator.clipboard.writeText('${vCode}'); alert('Voucher code copied: ${vCode}')">
+            ${vCode} <span class="copy-hint">(Click to copy)</span>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
   // Contextual quick action buttons
   const chips = [];
-  const textLower = text.toLowerCase();
+
+  // Cold food / 25% courtesy refund options
+  if (textLower.includes("cold") || textLower.includes("25%") || textLower.includes("lukewarm")) {
+    chips.push({ label: "⚡ Accept 25% Wallet Credit", msg: "Yes, please credit the 25% courtesy refund to my wallet." });
+    chips.push({ label: "🎟️ Claim Apology Voucher", msg: "I will take the apology voucher code for my next order." });
+  }
+
+  // Physical damage without photo attached yet
+  if ((textLower.includes("spill") || textLower.includes("leak") || textLower.includes("burnt") || textLower.includes("wrong dish")) && !meta.visual_assessment) {
+    chips.push({ label: "📷 Attach Photo of Damage", msg: "I want to attach a photo of the damaged meal." });
+  }
+
+  // Missing items
+  if (textLower.includes("missing")) {
+    chips.push({ label: "📦 Refund Missing Item Only", msg: "Please refund only the missing item value to my wallet." });
+  }
 
   // Dynamically find any order IDs mentioned in response
-  const ordMatches = text.match(/ORD-[A-Z0-9]+/g);
+  const ordMatches = textStr.match(/ORD-[A-Z0-9]+/g);
   if (ordMatches && ordMatches.length > 0) {
     const latestOrd = ordMatches[0];
-    if (!textLower.includes("refund reference id") && !textLower.includes("refund method you chose")) {
-      chips.push({ label: `⚡ Refund ${latestOrd} to Wallet`, msg: `Yes, please refund ${latestOrd} to my wallet` });
-      chips.push({ label: `💳 Refund ${latestOrd} to Original Payment`, msg: `Please refund ${latestOrd} to my original card` });
+    if (!textLower.includes("refund reference id") && !textLower.includes("refund method you chose") && !textLower.includes("cold")) {
+      chips.push({ label: `🛵 Live Status of ${latestOrd}`, msg: `What is the live tracking status of order ${latestOrd}?` });
     }
-    chips.push({ label: `🛵 Live Status of ${latestOrd}`, msg: `What is the live tracking status of order ${latestOrd}?` });
   }
 
   if (meta.action === "clarify" || textLower.includes("which of these") || textLower.includes("what went wrong")) {
@@ -551,7 +585,8 @@ function appendBotMsg(text, meta = {}) {
     <div class="msg-content">
       <div class="bubble bot-bubble">
         ${visualCardHtml}
-        ${fmtMarkdown(text)}
+        ${voucherHtml}
+        ${fmtMarkdown(textStr)}
       </div>
       ${chipsHtml}
       ${tagsHtml}
@@ -563,6 +598,7 @@ function appendBotMsg(text, meta = {}) {
   messages.appendChild(row);
   scrollDown();
 }
+
 
 
 window.sendQuickReply = function(msg) {

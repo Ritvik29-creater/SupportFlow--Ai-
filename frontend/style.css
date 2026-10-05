@@ -2407,5 +2407,73 @@ html, body {
   transition: width 0.4s ease;
 }
 
+/* ─── Voucher Toast Card Styles ─────────────────────────────────────────────── */
+.voucher-toast-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: linear-gradient(135deg, rgba(236, 72, 153, 0.15), rgba(168, 85, 247, 0.15));
+  border: 1px dashed rgba(236, 72, 153, 0.5);
+  border-radius: 12px;
+  padding: 10px 14px;
+  margin: 10px 0;
+  box-shadow: 0 0 14px rgba(236, 72, 153, 0.15);
+  animation: pulseVoucher 2.5s infinite alternate;
+}
+
+@keyframes pulseVoucher {
+  0% { border-color: rgba(236, 72, 153, 0.4); }
+  100% { border-color: rgba(168, 85, 247, 0.7); box-shadow: 0 0 20px rgba(168, 85, 247, 0.25); }
+}
+
+.voucher-toast-icon {
+  font-size: 24px;
+  flex-shrink: 0;
+}
+
+.voucher-toast-details {
+  display: flex;
+  flex-direction: column;
+}
+
+.voucher-toast-title {
+  font-size: 10.5px;
+  font-weight: 800;
+  color: #f472b6;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+}
+
+.voucher-toast-code {
+  font-family: var(--font-mono, monospace);
+  font-size: 14px;
+  font-weight: 700;
+  color: #fff;
+  background: rgba(0, 0, 0, 0.35);
+  padding: 3px 8px;
+  border-radius: 6px;
+  margin-top: 3px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: all 0.2s;
+}
+
+.voucher-toast-code:hover {
+  background: rgba(236, 72, 153, 0.25);
+  border-color: #f472b6;
+  transform: translateY(-1px);
+}
+
+.copy-hint {
+  font-size: 10px;
+  font-family: var(--font, sans-serif);
+  color: #f9a8d4;
+  font-weight: 500;
+}
+
+
 
 

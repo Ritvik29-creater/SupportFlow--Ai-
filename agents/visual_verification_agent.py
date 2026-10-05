@@ -293,6 +293,7 @@ def visual_verification_agent(state: Dict[str, Any]) -> Dict[str, Any]:
     # Detect hints in query or file name
     hint = ""
     q_low = query.lower()
+    is_cold_claim = any(w in q_low for w in ["cold", "lukewarm", "not hot", "stale"])
     if "spill" in q_low or "leak" in q_low or "gravy" in q_low:
         hint = "Photograph exhibits spilled sauce/gravy and broken plastic container"
     elif "burnt" in q_low or "charred" in q_low or "black" in q_low:
@@ -303,6 +304,8 @@ def visual_verification_agent(state: Dict[str, Any]) -> Dict[str, Any]:
         hint = "Photograph shows clean, completely intact meal with no damage"
     elif "shoe" in q_low or "cat" in q_low or "random" in q_low or "fake" in q_low:
         hint = "Photograph shows non-food object unrelated to food order"
+    elif is_cold_claim:
+        hint = "Customer complains of cold food (Note: temperature cannot be photographed)"
 
     # Multimodal Analysis
     assessment = None
@@ -312,11 +315,33 @@ def visual_verification_agent(state: Dict[str, Any]) -> Dict[str, Any]:
     if not assessment:
         assessment = analyze_with_reasoning_llm(raw_bytes, image_meta, order_info, query, image_hint=hint)
 
+    # Apply realistic food delivery economics:
+    # If the user is claiming cold food, cap at 25% courtesy refund (never 100% full refund for temperature)
+    if is_cold_claim and assessment.get("damage_type") not in ("Spilled / Packaging Crushed", "Burnt / Overcooked"):
+        assessment["decision"] = "APPROVE_PARTIAL_REFUND"
+        assessment["refund_percentage"] = 25
+        assessment["damage_type"] = "Temperature Drop (Cold Food)"
+        assessment["damage_severity"] = "minor"
+        assessment["reasoning"] = (
+            "Food temperature drops naturally during courier transit and cannot be verified via photograph. "
+            "Under SupportFlow's realistic Food Quality Policy, cold food qualifies for a 25% courtesy credit or a ₹75 apology voucher, not a 100% full refund."
+        )
+
     # Calculate monetary refund
     raw_amount = order_info.get("amount_raw", 350.0)
-    pct = assessment.get("refund_percentage", 100 if assessment.get("decision") == "APPROVE_FULL_REFUND" else 0)
+    pct = assessment.get("refund_percentage", 100 if assessment.get("decision") == "APPROVE_FULL_REFUND" else (25 if assessment.get("decision") == "APPROVE_PARTIAL_REFUND" else 0))
     calculated_refund = round((raw_amount * pct) / 100.0, 2)
     assessment["calculated_refund"] = f"₹{calculated_refund:.2f}"
+
+    # Generate voucher code for courtesy / partial cases
+    voucher_code = None
+    ord_clean = order_info.get("order_id", "APP").replace("ORD-", "")
+    if pct in (20, 25, 30):
+        voucher_code = f"WARM25-{ord_clean}"
+        assessment["voucher_code"] = voucher_code
+    elif pct == 50:
+        voucher_code = f"CARE50-{ord_clean}"
+        assessment["voucher_code"] = voucher_code
 
     # Database Refund Execution if Approved
     refund_record = None
@@ -325,8 +350,10 @@ def visual_verification_agent(state: Dict[str, Any]) -> Dict[str, Any]:
         if target_ord:
             refund_record = process_instant_refund(
                 order_id=target_ord,
-                reason=f"Visual Inspection Verified: {assessment.get('damage_type', 'Food Damage')}",
-                method="wallet"
+                reason=f"Visual Inspection ({assessment.get('damage_type', 'Food Defect')})",
+                method="wallet",
+                amount=calculated_refund,
+                voucher_code=voucher_code
             )
             assessment["refund_record"] = refund_record
 
@@ -337,14 +364,18 @@ def visual_verification_agent(state: Dict[str, Any]) -> Dict[str, Any]:
 
     badge_emoji = "✅" if is_approved else "❌"
     decision_title = (
-        "100% Full Refund Approved" if decision == "APPROVE_FULL_REFUND"
-        else ("50% Partial Compensation Approved" if decision == "APPROVE_PARTIAL_REFUND"
+        "100% Full Refund Approved" if pct == 100
+        else (f"{pct}% Courtesy Compensation Approved" if is_approved
               else "Refund Request Rejected")
     )
 
+    voucher_text = f"\n• **Next-Order Voucher:** `{voucher_code}` (Save ₹75 on next meal)" if voucher_code else ""
+
     txn_info = ""
     if refund_record and refund_record.get("success"):
-        txn_info = f"\n\n⚡ **Instant Resolution:** ₹{calculated_refund:.2f} has been immediately credited to your **SupportFlow Wallet** (Transaction Ref: `{refund_record.get('refund_id', 'REF-APPROVED')}`)."
+        txn_info = f"\n\n⚡ **Instant Settlement:** ₹{calculated_refund:.2f} credited to your **SupportFlow Wallet** (Ref: `{refund_record.get('refund_id', 'REF-APPROVED')}`)."
+        if voucher_code:
+            txn_info += f" You also received Voucher Code **`{voucher_code}`** for your next order!"
 
     response_text = f"""### 🔍 Multimodal Visual Verification Report
 {badge_emoji} **Verdict: {decision_title}**
@@ -356,7 +387,8 @@ def visual_verification_agent(state: Dict[str, Any]) -> Dict[str, Any]:
 • **Order Matched:** {'✅ Verified (Matches ' + order_info['order_id'] + ')' if assessment.get('food_match') else '⚠️ Item Mismatch Detected'}
 • **Physical Damage:** {assessment.get('damage_type', 'None')} *(Severity: {str(assessment.get('damage_severity', 'none')).capitalize()})*
 • **Fraud Risk Rating:** {str(assessment.get('fraud_risk', 'low')).upper()} *(Score: {fraud_score:.2f})*
-• **Authorized Compensation:** **₹{calculated_refund:.2f}** ({pct}% of {order_info['total_amount']})
+• **Authorized Compensation:** **₹{calculated_refund:.2f}** ({pct}% of {order_info['total_amount']}){voucher_text}
+
 
 **Inspector Findings:**
 > {assessment.get('reasoning', 'Evidence reviewed under SupportFlow Food Quality & Packaging Policy.')}

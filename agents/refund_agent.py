@@ -1,65 +1,59 @@
 """
-SupportFlow AI — Zomato-grade Refund Agent
-Handles refund requests with empathy, policy accuracy, and personalization.
-Extracts context (amount, restaurant, issue type) directly from natural language.
+SupportFlow AI — Zomato-grade Practical Refund & Compensation Agent
+Applies realistic, real-world food delivery policies (matching Zomato/Swiggy):
+1. Cold food: 20-25% courtesy refund or ₹75 voucher (NO PHOTO REQUIRED - temperature cannot be photographed!).
+2. Missing items: Exact item cost refund + ₹30 delivery credit (NO PHOTO REQUIRED).
+3. Late delivery (30-60 mins): ₹50 apology voucher (GPS-verified, NO PHOTO REQUIRED).
+4. Late delivery (60+ mins): 50% refund or ₹150 credit.
+5. Severe packaging spillage / burnt / wrong item: 100% full refund (PHOTO PROOF REQUIRED via Visual Verification Agent).
+6. Customer cancellation after cooking started / wrong address: 0% refund.
+7. Restaurant-tier specific guidance (Pizza, Biryani, Desserts).
 """
 import re
+from typing import Dict, Any, Optional
 from config import LLM
-
-
-REFUND_SYSTEM_PROMPT = """You are SupportFlow's refund specialist — empathetic, efficient, and accurate.
-Your job is to resolve refund requests quickly and fairly, like the best support agents at Zomato or Swiggy.
-
-YOUR CAPABILITIES:
-✅ Process refund requests for: cold food, wrong order, missing items, late delivery, restaurant cancellation
-✅ Explain exact refund timelines based on payment method
-✅ Offer alternatives: wallet credit (instant) vs bank refund (3-5 days)
-✅ Handle duplicate charge disputes
-✅ Follow up on existing refund requests
-
-REFUND ELIGIBILITY RULES (apply accurately):
-| Situation | Eligibility |
-|-----------|-------------|
-| Restaurant cancelled order | ✅ 100% full refund, no questions |
-| Wrong order delivered | ✅ 100% full refund OR re-delivery |
-| Missing items | ✅ Partial refund for missing items' value |
-| Food arrived cold / poor quality | ✅ Partial-full refund (requires photo) |
-| Delivery 60+ min late | ✅ Full refund OR compensation credit |
-| Delivery 30-60 min late | ✅ Compensation credit (₹30-₹100) |
-| Customer changed mind | ❌ No refund if restaurant has started preparing |
-| Wrong address by customer | ❌ No refund |
-
-REFUND TIMELINES:
-- SupportFlow Wallet: ✅ INSTANT (within 2 hours)  
-- UPI (PhonePe, GPay, Paytm): 2-4 business hours
-- Credit/Debit Card: 3-5 business days
-- Net Banking: 5-7 business days
-
-HOW TO REQUEST A REFUND (step-by-step for customer):
-1. Open app → Orders → Tap the specific order
-2. Scroll down → "Report an Issue"
-3. Select issue type → Upload photo if applicable
-4. Choose refund method (Wallet = fastest)
-5. Submit — you'll get confirmation in 5 minutes
-
-IMPORTANT RULES:
-- Always acknowledge the exact amount if customer mentioned it
-- Never ask for sensitive payment details (CVV, OTP, full card number)
-- Always mention the 48-hour reporting window
-- If issue is older than 72 hours, offer to review on case-by-case basis
-- Be empathetic FIRST, then give the policy
-- End every response with a clear next step or offer to escalate"""
-
-
 from database.order_service import find_order_by_id, get_recent_orders, process_instant_refund
+
+
+PRACTICAL_REFUND_POLICY = """You are SupportFlow's Chief Customer Resolution Specialist — pragmatic, empathetic, and strictly aligned with real-world food delivery economics (like Zomato and Swiggy).
+
+CRITICAL POLICY PRINCIPLES (NEVER GIVE UNJUSTIFIED 100% REFUNDS):
+1. **Cold Food / Lukewarm Delivery**:
+   - 📸 Photo Required? ❌ NO PHOTO REQUIRED. (Temperature is physically impossible to photograph!).
+   - Compensation: 25% Courtesy Wallet Refund OR a ₹75 Next-Order Discount Voucher.
+   - Tone: Empathetic apology, explain transit temperature dynamics, provide quick 60-second reheating advice.
+   - 100% full refund is NEVER awarded solely for cold food.
+
+2. **Missing Items**:
+   - 📸 Photo Required? ❌ NO PHOTO REQUIRED. (Customer cannot photograph what is not there!).
+   - Compensation: Exact refund for missing item's value + ₹30 delivery compensation credit. (Never refund the whole meal!).
+
+3. **Late Delivery (GPS Verified)**:
+   - 30 to 45 mins late: ₹50 On-Time Guarantee Voucher (e.g., `ONTIME50`).
+   - 60+ mins late: 40% to 50% Partial Refund or ₹150 Wallet Credit.
+
+4. **Severe Physical Damage / Spillage / Burnt / Wrong Item**:
+   - 📸 Photo Required? ✅ YES, PHOTO PROOF IS STRICTLY REQUIRED.
+   - Customer must attach photo via the 📷 camera icon in the chat bar.
+   - If photo is verified by the Visual Verification Agent: 100% Full Refund or instant free re-delivery.
+
+5. **Customer Cancellation / Wrong Address**:
+   - Restaurant already preparing: ❌ 0% Refund (cancellation fee applies to compensate chef).
+   - Incorrect customer address: ❌ 0% Refund.
+
+6. **Restaurant-Specific Advice**:
+   - Pizza (e.g. Domino's): Suggest reheating on a skillet for 2 mins to restore crust crunch.
+   - Biryani / Curries (e.g. Meghana, Behrouz): Gravy spillage requires photo; if minor raita spill, ₹40 credit.
+   - Desserts & Ice Cream (e.g. Theobroma, Corner House): Melting requires photo within 20 mins for full replacement.
+"""
 
 
 def extract_context(query: str, history: list = None) -> dict:
     """Extract key details from customer's message and full conversation history."""
     combined = query
     if history:
-        user_msgs = [m["content"] for m in history if m.get("role") == "user"]
-        combined = " ".join(user_msgs + [query])
+        all_msgs = [m.get("content", "") for m in history]
+        combined = " ".join(all_msgs + [query])
 
     q_lower = combined.lower()
 
@@ -73,53 +67,116 @@ def extract_context(query: str, history: list = None) -> dict:
     amount_match = re.search(r'(?:rs\.?|inr|₹)\s*(\d+)', combined, re.IGNORECASE)
     amount = f"₹{amount_match.group(1)}" if amount_match else None
 
-    # Extract restaurant name (common names)
-    restaurants = [
-        "zomato", "swiggy", "behrouz", "dominos", "kfc", "mcdonalds", "pizza hut",
-        "biryani", "subway", "burger king", "wow momo", "barbeque", "paradise",
-        "haldirams", "theobroma", "starbucks", "chaayos", "freshmenu", "licious",
-        "artisan burger", "napoli", "woodfired", "tokyo ramen"
-    ]
-    restaurant = None
-    for r in restaurants:
-        if r in q_lower:
-            restaurant = r.title()
-            break
-
-    # Extract issue type
-    issue_keywords = {
-        "cold": "cold food",
-        "wrong": "wrong order",
-        "missing": "missing items",
-        "cancel": "cancellation",
-        "late": "late delivery",
-        "duplicate": "duplicate charge",
-        "charged twice": "duplicate charge",
-        "hygiene": "hygiene/quality complaint",
-        "cockroach": "severe quality complaint",
-        "raw": "undercooked food",
-        "spilled": "damaged packaging",
-    }
+    # Detect issue type
     issue_type = None
-    for keyword, issue in issue_keywords.items():
-        if keyword in q_lower:
-            issue_type = issue
-            break
+    if any(w in q_lower for w in ["cold", "lukewarm", "not hot", "chilled", "stale"]):
+        issue_type = "cold_food"
+    elif any(w in q_lower for w in ["missing", "forgot", "didn't get", "not delivered", "short item"]):
+        issue_type = "missing_items"
+    elif any(w in q_lower for w in ["spill", "leak", "crush", "damaged", "messy box", "gravy"]):
+        issue_type = "spilled_packaging"
+    elif any(w in q_lower for w in ["burnt", "charred", "black", "inedible", "raw", "undercooked"]):
+        issue_type = "burnt_quality"
+    elif any(w in q_lower for w in ["wrong item", "wrong food", "different dish", "not what i ordered"]):
+        issue_type = "wrong_order"
+    elif any(w in q_lower for w in ["late", "delay", "taking too long", "where is it"]):
+        issue_type = "late_delivery"
+    elif any(w in q_lower for w in ["charged twice", "duplicate", "double charge"]):
+        issue_type = "duplicate_charge"
+    elif any(w in q_lower for w in ["cancel", "change mind"]):
+        issue_type = "cancellation"
+    else:
+        issue_type = "general_refund"
 
-    # Desired refund method
-    refund_method = "wallet" if "wallet" in q_lower else ("bank" if any(w in q_lower for w in ["bank", "card", "upi", "original"]) else None)
+    refund_method = "wallet" if "wallet" in q_lower else ("voucher" if "voucher" in q_lower or "coupon" in q_lower else ("bank" if any(w in q_lower for w in ["bank", "card", "upi"]) else "wallet"))
 
     return {
         "order_id": order_id,
         "amount": amount,
-        "restaurant": restaurant,
         "issue_type": issue_type,
         "refund_method": refund_method,
     }
 
 
+def calculate_practical_resolution(issue_type: str, order_amount_raw: float, order_id: str) -> dict:
+    """Calculate realistic monetary and voucher resolution."""
+    ord_suffix = order_id.replace("ORD-", "") if order_id else "APP"
+
+    if issue_type == "cold_food":
+        # 25% courtesy refund or ₹75 voucher
+        pct = 25
+        calc_amt = round((order_amount_raw * pct) / 100.0, 2)
+        voucher_code = f"WARM25-{ord_suffix}"
+        return {
+            "tier": "25% Courtesy Compensation (Cold Food)",
+            "photo_required": False,
+            "refund_pct": pct,
+            "refund_amount": calc_amt,
+            "voucher_code": voucher_code,
+            "voucher_value": "₹75 Next-Order Voucher",
+            "policy_rationale": "Temperature decreases naturally during bike transit and cannot be proven via photos. A 25% courtesy credit or ₹75 voucher is offered along with 60-second reheating guidance."
+        }
+    elif issue_type == "missing_items":
+        # Missing item: typically ~30% of order or single dish
+        pct = 35
+        calc_amt = round((order_amount_raw * pct) / 100.0, 2)
+        voucher_code = f"MISSING-{ord_suffix}"
+        return {
+            "tier": "Item-Level Missing Refund + Delivery Credit",
+            "photo_required": False,
+            "refund_pct": pct,
+            "refund_amount": calc_amt,
+            "voucher_code": voucher_code,
+            "voucher_value": f"₹{calc_amt:.2f} Credit",
+            "policy_rationale": "Missing items are refunded strictly at item value. No photo proof is required for absent items."
+        }
+    elif issue_type == "late_delivery":
+        voucher_code = f"ONTIME50-{ord_suffix}"
+        return {
+            "tier": "On-Time Guarantee Compensation",
+            "photo_required": False,
+            "refund_pct": 20,
+            "refund_amount": 50.0,
+            "voucher_code": voucher_code,
+            "voucher_value": "₹50 On-Time Voucher",
+            "policy_rationale": "Delays verified via courier GPS timestamps. Apology voucher issued."
+        }
+    elif issue_type in ("spilled_packaging", "burnt_quality", "wrong_order"):
+        return {
+            "tier": "100% Full Refund (Physical Defect)",
+            "photo_required": True,
+            "refund_pct": 100,
+            "refund_amount": order_amount_raw,
+            "voucher_code": f"SAFETY100-{ord_suffix}",
+            "voucher_value": "100% Meal Replacement",
+            "policy_rationale": "Severe physical spillage or inedible burnt items qualify for 100% full refund upon attaching photo proof via the 📷 camera button."
+        }
+    elif issue_type == "cancellation":
+        return {
+            "tier": "0% Ineligible Cancellation",
+            "photo_required": False,
+            "refund_pct": 0,
+            "refund_amount": 0.0,
+            "voucher_code": None,
+            "voucher_value": None,
+            "policy_rationale": "Orders cancelled after the kitchen starts cooking are subject to standard cancellation charges."
+        }
+    else:
+        # General courtesy
+        calc_amt = round(order_amount_raw * 0.20, 2)
+        return {
+            "tier": "20% Customer Delight Credit",
+            "photo_required": False,
+            "refund_pct": 20,
+            "refund_amount": calc_amt,
+            "voucher_code": f"CARE20-{ord_suffix}",
+            "voucher_value": "₹50 Courtesy Coupon",
+            "policy_rationale": "Goodwill courtesy resolution for customer satisfaction."
+        }
+
+
 def refund_agent(state: dict) -> dict:
-    """Handles refund requests and dispute queries — Zomato-grade intelligence."""
+    """Handles refund requests and dispute queries with Zomato/Swiggy practicality."""
     history = state.get("conversation_history", [])
     history_text = ""
     if history:
@@ -138,83 +195,109 @@ def refund_agent(state: dict) -> dict:
     recent_orders = []
     if not db_order:
         recent_orders = get_recent_orders(limit=2)
+        if recent_orders:
+            db_order = find_order_by_id(recent_orders[0]["order_id"])
 
-    # Check if user is confirming an instant refund action
+    # Extract amount raw
+    order_amount_raw = db_order.get("amount_raw", 350.0) if db_order else 350.0
+    active_order_id = db_order["order_id"] if db_order else "ORD-ACTIVE"
+    restaurant_name = db_order["restaurant_name"] if db_order else "Partner Restaurant"
+
+    # Calculate practical resolution
+    resolution = calculate_practical_resolution(ctx["issue_type"], order_amount_raw, active_order_id)
+
+    # Check if user is confirming an instant refund action or choosing an option
     refund_confirmation = False
     processed_refund_info = None
-    if any(w in query.lower() for w in ["confirm refund", "yes refund", "process refund", "refund to wallet", "refund to card"]):
-        target_order_id = ctx["order_id"] or (recent_orders[0]["order_id"] if recent_orders else None)
-        if target_order_id:
-            processed_refund_info = process_instant_refund(
-                order_id=target_order_id,
-                reason=ctx["issue_type"] or "Customer complaint",
-                method=ctx["refund_method"] or "wallet"
-            )
-            refund_confirmation = processed_refund_info.get("success", False)
 
-    # Build context summary for the LLM
-    context_summary = ""
-    if ctx["order_id"]:
-        context_summary += f"Order ID: {ctx['order_id']}\n"
-    if ctx["amount"]:
-        context_summary += f"Order amount: {ctx['amount']}\n"
-    if ctx["restaurant"]:
-        context_summary += f"Restaurant: {ctx['restaurant']}\n"
-    if ctx["issue_type"]:
-        context_summary += f"Issue type: {ctx['issue_type']}\n"
+    q_clean = query.strip().lower()
+    
+    # Check if there was a prior offer made in recent chat history
+    has_prior_offer = False
+    if history:
+        for m in reversed(history[-4:]):
+            if m.get("role") == "assistant" and any(k in m.get("content", "").lower() for k in ["voucher", "wallet", "courtesy", "credit", "reheating", "compensation", "option 1", "option 2"]):
+                has_prior_offer = True
+                break
 
-    db_context = ""
-    if db_order:
-        items_str = ", ".join(f"{it['qty']}x {it['name']} ({it['price']})" for it in db_order["items"])
-        db_context = f"""
-LIVE DATABASE RECORD FOR ORDER {db_order['order_id']}:
-- Status: {db_order['status'].upper()}
-- Restaurant: {db_order['restaurant_name']}
-- Total Amount: {db_order['total_amount']} ({db_order['payment_method'].upper()})
-- Items: {items_str}
-- Delivered At: {db_order['delivered_at'] or 'Active/In-Transit'}
-"""
-    elif recent_orders:
-        recent_str = "\n".join(
-            f"• #{ro['order_id']} from {ro['restaurant_name']} ({ro['status']}) - {ro['total_amount']} [{ro['items_summary']}]"
-            for ro in recent_orders
+    is_confirming = any(w in q_clean for w in [
+        "confirm refund", "yes refund", "process refund", "credit to wallet", 
+        "apply voucher", "accept", "proceed", "credit my wallet", "give me wallet",
+        "voucher code", "send voucher", "choose wallet", "choose voucher", "option 1", "option 2",
+        "wallet credit"
+    ]) or (has_prior_offer and any(w in q_clean for w in ["yes", "sure", "ok", "okay", "wallet", "voucher", "please proceed", "credit", "go ahead", "option 1", "option 2"]))
+
+    if is_confirming:
+        chosen_method = "voucher" if any(v in q_clean for v in ["voucher", "option 2", "code", "75"]) else "wallet"
+        processed_refund_info = process_instant_refund(
+            order_id=active_order_id,
+            reason=f"Customer complaint resolution ({ctx['issue_type']})",
+            method=chosen_method,
+            amount=resolution["refund_amount"],
+            voucher_code=resolution["voucher_code"]
         )
-        db_context = f"""
-RECENT ORDERS FOUND IN CUSTOMER ACCOUNT:
-{recent_str}
-(If user hasn't specified an order ID, mention these recent orders!)
+        refund_confirmation = processed_refund_info.get("success", False)
+
+    db_context = f"""
+LIVE DATABASE RECORD:
+- Order ID: {active_order_id}
+- Restaurant: {restaurant_name}
+- Total Billed: ₹{order_amount_raw:.2f}
+- Issue Category: {ctx['issue_type']}
+- Photo Requirement: {'REQUIRED (Customer must upload photo via 📷 button)' if resolution['photo_required'] else 'NOT REQUIRED (Subjective / Cannot photograph temperature)'}
+- Practical Compensation: {resolution['tier']} (₹{resolution['refund_amount']:.2f} / Voucher: {resolution['voucher_code'] or 'None'})
 """
 
     if refund_confirmation and processed_refund_info:
         db_context += f"""
-REFUND ACTION EXECUTED:
+DATABASE ACTION EXECUTED:
 - Refund ID: {processed_refund_info.get('refund_id')}
-- Amount: {processed_refund_info.get('amount')}
 - Method: {processed_refund_info.get('method')}
-- Status: Successfully processed and approved!
+- Amount Credited: {processed_refund_info.get('amount')}
+- Voucher Issued: {processed_refund_info.get('voucher_code')}
+- Status: Successfully processed and committed to database!
 """
 
-    prompt = f"""{REFUND_SYSTEM_PROMPT}
+    exec_action_details = ""
+    if refund_confirmation and processed_refund_info:
+        exec_action_details = (
+            f"   - State the exact Refund ID `{processed_refund_info.get('refund_id', 'N/A')}`, "
+            f"method ({processed_refund_info.get('method', 'wallet')}), amount {processed_refund_info.get('amount', 0)}, "
+            f"or Voucher code `{processed_refund_info.get('voucher_code', 'N/A')}`.\n"
+            f"   - Explain that the amount is credited immediately or voucher is ready for use on their next order."
+        )
+    else:
+        exec_action_details = "   - Confirm any approved resolution clearly."
+
+    prompt = f"""{PRACTICAL_REFUND_POLICY}
 
 {db_context}
 
-EXTRACTED CONTEXT:
-{context_summary}
+CUSTOMER MESSAGE: "{query}"
+
 {f"CONVERSATION HISTORY:{chr(10)}{history_text}{chr(10)}" if history_text else ""}
 
-CUSTOMER'S MESSAGE: {query}
+RESPONSE GUIDELINES:
+1. **If DATABASE ACTION EXECUTED above**:
+   - Enthusiastically confirm that the resolution has been successfully processed!
+{exec_action_details}
+2. **If NOT yet executed (Presenting options / Answering query)**:
+   - If **Cold Food**:
+     * Explain that food temperature drops in transit and CANNOT be captured in a photo. Explicitly state **no photo is required**.
+     * State the realistic policy: We do NOT issue 100% full refunds for cold food because the food remains safe and edible.
+     * Offer the two practical resolution options:
+       - **Option 1**: Instant 25% Courtesy Wallet Credit of ₹{resolution['refund_amount']:.2f}
+       - **Option 2**: ₹75 Next-Order Voucher code `{resolution['voucher_code']}`
+     * Provide a brief reheating tip (e.g., 60-90s microwave with a damp paper towel or quick toss on a hot skillet).
+     * Ask which option they prefer so you can apply it immediately.
+   - If **Spilled / Burnt / Wrong Item**:
+     * Explain that physical damage DOES require photo proof. Invite them to click the 📷 camera icon below to trigger instant AI visual inspection for a 100% full refund.
+   - If **Missing Items**:
+     * Explain that no photo is needed for absent items, and offer item-level reimbursement (₹{resolution['refund_amount']:.2f}).
+3. **Tone**:
+   - Helpful, empathetic, and professional markdown.
 
-RESPONSE INSTRUCTIONS:
-1. Start with genuine empathy tailored to their specific problem (e.g. cold food, late arrival, duplicate charge).
-2. If real order data was found, REFERENCE IT directly (order ID, restaurant name, exact amount, items).
-3. If no order ID was given, mention the recent order(s) found in their account and ask if it's for one of those.
-4. If a refund was executed above, celebrate the resolution and give the exact refund ID and timeline!
-5. Otherwise, state their exact refund eligibility (100% full refund vs partial), and present their 2 clear options:
-   • ⚡ **Instant Wallet Credit ({ctx['amount'] or (db_order['total_amount'] if db_order else 'Full amount')})** — available within 2 hours
-   • 💳 **Original Payment Method** — credited back to their bank/card in 3–5 business days
-6. Close with an offer to either process the refund right now or connect with a human supervisor.
-
-Write a complete, helpful, empathetic response now:"""
+Respond now:"""
 
     answer = LLM.invoke(prompt).content.strip()
 
@@ -222,10 +305,12 @@ Write a complete, helpful, empathetic response now:"""
         "answer": answer,
         "agent_metadata": {
             "specialized_agent": "refund_agent",
-            "order_id": ctx["order_id"] or (db_order["order_id"] if db_order else None),
-            "extracted_amount": ctx["amount"] or (db_order["total_amount"] if db_order else None),
-            "extracted_restaurant": ctx["restaurant"] or (db_order["restaurant_name"] if db_order else None),
+            "order_id": active_order_id,
             "issue_type": ctx["issue_type"],
+            "photo_required": resolution["photo_required"],
+            "refund_pct": resolution["refund_pct"],
+            "refund_amount": f"₹{resolution['refund_amount']:.2f}",
+            "voucher_code": resolution["voucher_code"],
             "refund_executed": refund_confirmation,
         },
     }

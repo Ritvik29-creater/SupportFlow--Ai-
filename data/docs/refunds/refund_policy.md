@@ -3,46 +3,46 @@
 ## Overview
 SupportFlow AI's refund policy is designed to be fair, fast, and hassle-free. We want every customer to have a great experience, and when something goes wrong, we make it right.
 
-## Eligible Refund Reasons
-Customers are eligible for full or partial refunds in the following situations:
+## Practical Compensation & Refund Matrix (Zomato-Grade)
+SupportFlow uses a fair, realistic, and practical compensation framework:
 
-### Full Refund (100%)
-- Order cancelled by restaurant after customer waited more than 20 minutes
-- Food arrived more than 60 minutes late from the estimated delivery time
-- Wrong order delivered (completely different items from what was ordered)
-- Food found to be unsafe, contaminated, or inedible
-- Duplicate payment / double charge confirmed by billing team
-- Delivery never arrived (non-delivery confirmed)
-- Restaurant permanently closed or de-listed from platform
+### 1. Issues Requiring Visual Photo Proof (Analyzed by AI Vision Agent)
+Photo evidence is strictly evaluated for visible physical defects:
+- **Severe Packaging Rupture / Total Spillage**: Broken containers, spilled curry/gravy all over the outer bag.
+  → **100% Full Refund** or free immediate re-delivery.
+- **Wrong Dish Delivered**: Delivered item does not match billed item.
+  → **100% Item Refund** or replacement order.
+- **Burnt, Charred, or Inedible Food**: Visual evidence of severe overcooking or burning.
+  → **100% Item Refund** or ₹150 apology voucher.
+- **Foreign Contaminant / Severe Hygiene Issue**: Insect, hair, or physical foreign matter.
+  → **100% Full Refund** + Escalation to Partner Restaurant Quality Manager.
+- **Partial Container Leakage (Condiments / Side Salan)**: Minor leakage of side sauce/raita while main meal is intact.
+  → **25% to 30% Partial Credit** or ₹50 condiment voucher.
+- **Melted Ice Cream & Frozen Desserts**: Photo within 15–20 minutes of delivery.
+  → **100% Replacement** or Full Item Refund.
 
-### Partial Refund (50-80%)
-- Missing items from order (refund for the missing items' value)
-- Significant food quality issues (cold food, wrong preparation)
-- Significant delay (30-60 minutes beyond estimated time)
-- Minor wrong order (1-2 items different from what was ordered)
+### 2. Issues NOT Requiring Photo Proof (Subjective / Telemetry-Verified)
+Customers are NOT asked for photos when physical proof is impossible or telemetry is available:
+- **Cold Food / Arrived Lukewarm**:
+  *Temperature cannot be proven via photos.* Food temperature can drop during courier transit.
+  → **20% to 25% Courtesy Wallet Credit** OR **₹75 Discount Voucher** (`WARM25-COURTESY`), plus reheating recommendations. (100% refund is NEVER given solely for cold food).
+- **Missing Items from Order**:
+  *A customer cannot photograph an item that is missing.*
+  → **Exact item-level refund** (e.g., ₹60 for missing Garlic Bread, NOT the entire order total) + ₹30 delivery credit.
+- **Delivery Delays (GPS Verified)**:
+  - 30–45 mins beyond estimated arrival: **₹50 Late Delivery Voucher** (`ONTIME50`).
+  - 60+ mins delay: **40% to 50% Refund** or ₹150 wallet credit.
+- **Taste Dissatisfaction (Too spicy/bland)**:
+  → **₹50 Gourmet Experience Voucher** (`ZOMATO-FLAVOR`) for future orders. No cash refund.
 
-### No Refund
-- Customer changed their mind after order was accepted by restaurant
-- Incorrect delivery address provided by customer
-- Customer unavailable to receive delivery after 3 attempts
-- Refund request submitted more than 48 hours after delivery
+### 3. Ineligible Claims (0% Refund)
+- Food arrived intact, fresh, and undamaged (verified by AI fraud detection).
+- Customer changed mind after the restaurant started cooking (standard cancellation fee).
+- Incorrect delivery address entered by customer.
+- Refund requested after 24 hours of delivery.
 
-## How to Request a Refund
-1. Go to Orders → Select the problematic order → Report an Issue
-2. Select the reason from the dropdown
-3. Upload a photo if applicable (speeds up processing significantly)
-4. Submit — you'll receive a confirmation within 5 minutes
-
-## Refund Processing Times
-- **SupportFlow Wallet credit**: Instant (within 2 hours)
-- **UPI payments**: 2-4 business hours
-- **Credit/Debit card**: 3-5 business days
-- **Net banking**: 5-7 business days
-
-## Special Cases
-- If a refund was not processed within the stated timeframe, contact support and we will manually escalate within 24 hours
-- Customers who experience 3+ quality issues in 30 days may be flagged for manual review
-- Restaurant partners are charged back for confirmed quality failures
-
-## Human Escalation
-If your refund was denied and you believe it was incorrectly denied, you can request a human review. A support agent will review your case within 2-4 hours during business hours (9 AM - 9 PM IST).
+## Compensation Options
+Customers can choose between:
+1. **⚡ Instant Wallet Credit**: Credited to SupportFlow Wallet within 2 hours.
+2. **🎟️ Apology Discount Voucher**: Instant promo code (e.g. `WARM25`, `FAST50`) valid on their next order.
+3. **💳 Original Payment Method**: Credited to bank/card within 3–5 business days.

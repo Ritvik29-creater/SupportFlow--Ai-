@@ -92,37 +92,59 @@ def get_recent_orders(limit: int = 3) -> List[Dict[str, Any]]:
         db.close()
 
 
-def process_instant_refund(order_id: str, reason: str, method: str = "wallet") -> Dict[str, Any]:
-    """Create a refund entry in the database for an order."""
+def process_instant_refund(
+    order_id: str,
+    reason: str,
+    method: str = "wallet",
+    amount: Optional[float] = None,
+    voucher_code: Optional[str] = None,
+) -> Dict[str, Any]:
+    """Create a refund or voucher entry in the database for an order with exact amount."""
     db = SessionLocal()
     try:
-        order = db.query(Order).filter(Order.id == order_id).first()
+        clean_id = order_id.strip().upper().replace("#", "")
+        order = db.query(Order).filter(Order.id == clean_id).first()
+        if not order:
+            order = db.query(Order).filter(Order.id.ilike(f"%{clean_id}%")).first()
         if not order:
             return {"success": False, "message": "Order not found"}
         
+        # Calculate refund amount (custom partial or full)
+        final_amount = amount if amount is not None and amount > 0 else order.total_amount
+        # Cap at order total
+        if final_amount > order.total_amount:
+            final_amount = order.total_amount
+
+        admin_note = f"Processed by SupportFlow AI ({method}): {reason}"
+        if voucher_code:
+            admin_note += f" | Voucher Issued: {voucher_code}"
+
         refund = Refund(
             order_id=order.id,
             customer_id=order.customer_id,
-            amount=order.total_amount,
+            amount=final_amount,
             reason=reason,
-            status=RefundStatus.approved if method == "wallet" else RefundStatus.requested,
+            status=RefundStatus.approved if method in ("wallet", "voucher") else RefundStatus.requested,
             refund_method=method,
-            admin_notes=f"Processed automatically by SupportFlow AI ({method})"
+            admin_notes=admin_note
         )
         db.add(refund)
         db.commit()
         return {
             "success": True,
             "refund_id": refund.id,
-            "amount": f"₹{order.total_amount:.2f}",
+            "amount": f"₹{final_amount:.2f}",
+            "amount_raw": final_amount,
             "method": method,
-            "status": "credited_instantly" if method == "wallet" else "initiated_bank_refund"
+            "voucher_code": voucher_code,
+            "status": "credited_instantly" if method in ("wallet", "voucher") else "initiated_bank_refund"
         }
     except Exception as e:
         db.rollback()
         return {"success": False, "message": str(e)}
     finally:
         db.close()
+
 
 
 def mark_order_as_delivered(order_id: str) -> Optional[Dict[str, Any]]:
