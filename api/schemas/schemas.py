@@ -58,6 +58,25 @@ class RestaurantOut(BaseModel):
         from_attributes = True
 
 
+class MenuItemOut(BaseModel):
+    id: str
+    restaurant_id: str
+    name: str
+    price: float
+    description: Optional[str] = None
+    category: Optional[str] = None
+    is_veg: bool = False
+    rating: float = 4.5
+    image_emoji: str = "🍲"
+
+    class Config:
+        from_attributes = True
+
+
+class RestaurantWithMenuOut(RestaurantOut):
+    menu_items: List[MenuItemOut] = []
+
+
 # ─── Order Schemas ────────────────────────────────────────────────────────────
 
 class OrderItemOut(BaseModel):

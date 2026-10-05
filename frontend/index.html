@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SupportFlow AI — Intelligent Food Delivery Support</title>
-  <meta name="description" content="AI-powered food delivery support. Get instant help with orders, refunds, payments and more.">
+  <title>SupportFlow — Zomato-grade Food Delivery & AI Agent</title>
+  <meta name="description" content="Agentic food delivery platform with 100+ restaurants, 1-tap ordering, and intelligent multi-agent customer support.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -17,224 +17,350 @@
     <div class="orb orb-3"></div>
   </div>
 
-  <div class="app-shell">
+  <div class="app-container">
 
-    <!-- ── SIDEBAR ─────────────────────────────────────────────── -->
-    <aside class="sidebar">
-      <div class="brand">
-        <div class="brand-icon">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round">
+    <!-- ── TOP NAVIGATION BAR ── -->
+    <header class="top-nav">
+      <div class="nav-brand" onclick="switchTab('restaurants')">
+        <div class="brand-logo-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round">
             <path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/>
           </svg>
         </div>
-        <div class="brand-text">
-          <span class="brand-name">SupportFlow</span>
-          <span class="brand-tag">AI v3</span>
+        <div class="brand-info">
+          <span class="brand-title">SupportFlow</span>
+          <span class="brand-badge">Food Delivery & AI</span>
         </div>
       </div>
 
-      <div class="status-row">
-        <div class="status-indicator" id="status-indicator">
+      <nav class="nav-tabs">
+        <button class="nav-tab active" id="tab-restaurants" onclick="switchTab('restaurants')">
+          <span class="tab-icon">🍽️</span>
+          <span class="tab-label">Explore Restaurants</span>
+          <span class="tab-count" id="rests-count-badge">90+</span>
+        </button>
+        <button class="nav-tab" id="tab-orders" onclick="switchTab('orders')">
+          <span class="tab-icon">🛵</span>
+          <span class="tab-label">My Orders & Tracking</span>
+          <span class="tab-count" id="orders-count-badge">2</span>
+        </button>
+        <button class="nav-tab" id="tab-chat" onclick="switchTab('chat')">
+          <span class="tab-icon">🤖</span>
+          <span class="tab-label">AI Support Flow</span>
+          <span class="pulse-dot"></span>
+        </button>
+      </nav>
+
+      <div class="nav-actions">
+        <div class="status-indicator online" id="status-indicator">
           <span class="status-dot"></span>
-          <span class="status-label" id="status-label">Connecting...</span>
+          <span class="status-label" id="status-label">AI Online</span>
         </div>
-        <span class="model-chip" id="model-chip">LLaMA 3.3 70B</span>
+        <button class="quick-chat-nav-btn" onclick="switchTab('chat')">
+          <span>💬</span> Ask AI
+        </button>
+      </div>
+    </header>
+
+    <!-- ── TAB 1: RESTAURANTS & FOOD DELIVERY ── -->
+    <section class="tab-content active" id="view-restaurants">
+      <div class="food-hero">
+        <div class="hero-content">
+          <h1 class="hero-title">Craving delicious food? <span class="text-gradient">Order in 1-tap.</span></h1>
+          <p class="hero-subtitle">Browse 90+ top-rated restaurants. If you ever need help, our LangGraph AI Assistant resolves issues instantly.</p>
+          
+          <div class="search-bar-wrapper">
+            <span class="search-icon">🔍</span>
+            <input 
+              type="text" 
+              id="restaurant-search" 
+              class="search-input" 
+              placeholder="Search dishes (Biryani, Pizza, Burger, Tacos...) or restaurants (Meghana, Domino's, Behrouz)..."
+              oninput="handleSearch(this.value)"
+            >
+          </div>
+
+          <!-- Cuisine Category Filter Chips -->
+          <div class="category-filters" id="category-filters">
+            <button class="cat-chip active" onclick="filterCuisine('All')">🔥 All Places</button>
+            <button class="cat-chip" onclick="filterCuisine('Biryani & Mughlai')">🍗 Biryani & Mughlai</button>
+            <button class="cat-chip" onclick="filterCuisine('Pizza & Italian')">🍕 Pizza & Italian</button>
+            <button class="cat-chip" onclick="filterCuisine('Burgers & American Fast Food')">🍔 Burgers & Fast Food</button>
+            <button class="cat-chip" onclick="filterCuisine('North Indian & Mughlai')">🍛 North Indian</button>
+            <button class="cat-chip" onclick="filterCuisine('South Indian & Coastal')">🥞 South Indian</button>
+            <button class="cat-chip" onclick="filterCuisine('Chinese & Pan-Asian')">🥢 Chinese & Asian</button>
+            <button class="cat-chip" onclick="filterCuisine('Healthy, Salads & Bowls')">🥗 Healthy & Salads</button>
+            <button class="cat-chip" onclick="filterCuisine('Desserts, Bakery & Cafes')">🍰 Desserts & Cafes</button>
+            <button class="cat-chip" onclick="filterCuisine('Street Food & Snacks')">🥟 Street Food</button>
+          </div>
+        </div>
       </div>
 
-      <div class="section-label">Agent Pipeline</div>
+      <!-- Restaurants Grid -->
+      <div class="restaurants-container">
+        <div class="section-heading">
+          <h2>Top Restaurants in Your City</h2>
+          <span class="results-meta" id="results-count">Showing 90 restaurants</span>
+        </div>
 
-      <div class="pipeline" id="pipeline">
-        <div class="pipeline-node" id="node-guard" data-state="idle">
-          <div class="node-left">
-            <div class="node-icon">🛡️</div>
-            <div class="node-info">
-              <div class="node-name">Security Guard</div>
-              <div class="node-desc" id="desc-guard">Input validation</div>
+        <div class="restaurants-grid" id="restaurants-grid">
+          <!-- Populated dynamically by app.js -->
+          <div class="grid-loading">Loading top restaurants and dishes...</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── TAB 2: MY ORDERS & TRACKING ── -->
+    <section class="tab-content" id="view-orders">
+      <div class="orders-page-header">
+        <div>
+          <h2>Your Orders & Live Tracking</h2>
+          <p class="text-muted">Track live delivery status, view past orders, or initiate 1-tap refunds with SupportFlow AI.</p>
+        </div>
+        <button class="refresh-orders-btn" onclick="loadOrders()">
+          <span>🔄</span> Refresh Orders
+        </button>
+      </div>
+
+      <div class="orders-list-container" id="orders-list">
+        <!-- Populated dynamically by app.js -->
+        <div class="grid-loading">Loading your orders...</div>
+      </div>
+    </section>
+
+    <!-- ── TAB 3: AI SUPPORT CHAT & PIPELINE ── -->
+    <section class="tab-content" id="view-chat">
+      <div class="chat-app-shell">
+
+        <!-- Sidebar / Pipeline Monitor -->
+        <aside class="sidebar">
+          <div class="sidebar-header">
+            <div class="sidebar-brand-text">
+              <span class="brand-name">SupportFlow AI</span>
+              <span class="brand-tag">LangGraph v3</span>
+            </div>
+            <span class="model-chip" id="model-chip">GPT-120B & Qwen</span>
+          </div>
+
+          <div class="section-label">Multi-Agent Control Flow</div>
+
+          <div class="pipeline" id="pipeline">
+            <div class="pipeline-node" id="node-guard" data-state="idle">
+              <div class="node-left">
+                <div class="node-icon">🛡️</div>
+                <div class="node-info">
+                  <div class="node-name">Security Guard</div>
+                  <div class="node-desc" id="desc-guard">Input validation</div>
+                </div>
+              </div>
+              <div class="node-status-dot"></div>
+            </div>
+
+            <div class="pipeline-connector"></div>
+
+            <div class="pipeline-node" id="node-sentiment" data-state="idle">
+              <div class="node-left">
+                <div class="node-icon">💭</div>
+                <div class="node-info">
+                  <div class="node-name">Sentiment Agent</div>
+                  <div class="node-desc" id="desc-sentiment">Emotion detection</div>
+                </div>
+              </div>
+              <div class="node-status-dot"></div>
+            </div>
+
+            <div class="pipeline-connector"></div>
+
+            <div class="pipeline-node" id="node-intent" data-state="idle">
+              <div class="node-left">
+                <div class="node-icon">🧠</div>
+                <div class="node-info">
+                  <div class="node-name">Intent Agent</div>
+                  <div class="node-desc" id="desc-intent">Query classification</div>
+                </div>
+              </div>
+              <div class="node-status-dot"></div>
+            </div>
+
+            <div class="pipeline-connector"></div>
+
+            <div class="pipeline-node" id="node-rag" data-state="idle">
+              <div class="node-left">
+                <div class="node-icon">📚</div>
+                <div class="node-info">
+                  <div class="node-name">RAG Retrieval</div>
+                  <div class="node-desc" id="desc-rag">Policy knowledge base</div>
+                </div>
+              </div>
+              <div class="node-status-dot"></div>
+            </div>
+
+            <div class="pipeline-connector"></div>
+
+            <div class="pipeline-node" id="node-specialist" data-state="idle">
+              <div class="node-left">
+                <div class="node-icon" id="specialist-icon">🤖</div>
+                <div class="node-info">
+                  <div class="node-name" id="specialist-name">Specialist Agent</div>
+                  <div class="node-desc" id="desc-specialist">Database & Policies</div>
+                </div>
+              </div>
+              <div class="node-status-dot"></div>
+            </div>
+
+            <div class="pipeline-connector"></div>
+
+            <div class="pipeline-node" id="node-confidence" data-state="idle">
+              <div class="node-left">
+                <div class="node-icon">🎯</div>
+                <div class="node-info">
+                  <div class="node-name">Confidence Check</div>
+                  <div class="node-desc" id="desc-confidence">Quality & Routing</div>
+                </div>
+              </div>
+              <div class="node-status-dot"></div>
             </div>
           </div>
-          <div class="node-status-dot"></div>
-        </div>
 
-        <div class="pipeline-connector"></div>
-
-        <div class="pipeline-node" id="node-sentiment" data-state="idle">
-          <div class="node-left">
-            <div class="node-icon">💭</div>
-            <div class="node-info">
-              <div class="node-name">Sentiment Agent</div>
-              <div class="node-desc" id="desc-sentiment">Emotion detection</div>
+          <!-- Quality Meter -->
+          <div class="confidence-card" id="conf-card" style="display:none">
+            <div class="conf-header">
+              <span class="conf-title">Answer Quality</span>
+              <span class="conf-pct" id="conf-pct">—</span>
+            </div>
+            <div class="conf-track">
+              <div class="conf-fill" id="conf-fill"></div>
+            </div>
+            <div class="conf-labels">
+              <span>Low</span><span>Medium</span><span>High</span>
             </div>
           </div>
-          <div class="node-status-dot"></div>
-        </div>
 
-        <div class="pipeline-connector"></div>
+          <!-- Intent Badge -->
+          <div class="intent-card" id="intent-card" style="display:none">
+            <div class="intent-label">Detected Intent</div>
+            <div class="intent-badge" id="intent-badge">—</div>
+          </div>
 
-        <div class="pipeline-node" id="node-intent" data-state="idle">
-          <div class="node-left">
-            <div class="node-icon">🧠</div>
-            <div class="node-info">
-              <div class="node-name">Intent Agent</div>
-              <div class="node-desc" id="desc-intent">Query classification</div>
+          <!-- Sentiment Badge -->
+          <div class="sentiment-card" id="sentiment-card" style="display:none">
+            <div class="sentiment-label">Customer Mood</div>
+            <div class="sentiment-badge" id="sentiment-badge">—</div>
+          </div>
+
+          <div class="sidebar-tips">
+            <div class="tips-header">💡 Zomato AI Capabilities</div>
+            <ul>
+              <li>Tracks real orders from <strong>SQLite</strong></li>
+              <li>Calculates refunds & credit timelines</li>
+              <li>Connects to human supervisors (HITL)</li>
+              <li>Detects orders without manual ID entry</li>
+            </ul>
+          </div>
+        </aside>
+
+        <!-- Main Chat Area -->
+        <main class="chat-area">
+          <header class="chat-header">
+            <div class="chat-header-left">
+              <div class="chat-title">
+                <span class="chat-name">SupportFlow AI Chat</span>
+                <span class="chat-sub" id="chat-sub">Multi-Agent · SQLite Grounded · HITL</span>
+              </div>
             </div>
-          </div>
-          <div class="node-status-dot"></div>
-        </div>
-
-        <div class="pipeline-connector"></div>
-
-        <div class="pipeline-node" id="node-rag" data-state="idle">
-          <div class="node-left">
-            <div class="node-icon">📚</div>
-            <div class="node-info">
-              <div class="node-name">RAG Retrieval</div>
-              <div class="node-desc" id="desc-rag">Policy knowledge base</div>
-            </div>
-          </div>
-          <div class="node-status-dot"></div>
-        </div>
-
-        <div class="pipeline-connector"></div>
-
-        <div class="pipeline-node" id="node-specialist" data-state="idle">
-          <div class="node-left">
-            <div class="node-icon" id="specialist-icon">🤖</div>
-            <div class="node-info">
-              <div class="node-name" id="specialist-name">Specialist Agent</div>
-              <div class="node-desc" id="desc-specialist">Generating answer</div>
-            </div>
-          </div>
-          <div class="node-status-dot"></div>
-        </div>
-
-        <div class="pipeline-connector"></div>
-
-        <div class="pipeline-node" id="node-confidence" data-state="idle">
-          <div class="node-left">
-            <div class="node-icon">🎯</div>
-            <div class="node-info">
-              <div class="node-name">Confidence Check</div>
-              <div class="node-desc" id="desc-confidence">Quality scoring</div>
-            </div>
-          </div>
-          <div class="node-status-dot"></div>
-        </div>
-      </div>
-
-      <!-- Confidence Meter -->
-      <div class="confidence-card" id="conf-card" style="display:none">
-        <div class="conf-header">
-          <span class="conf-title">Answer Quality</span>
-          <span class="conf-pct" id="conf-pct">—</span>
-        </div>
-        <div class="conf-track">
-          <div class="conf-fill" id="conf-fill"></div>
-        </div>
-        <div class="conf-labels">
-          <span>Low</span><span>Medium</span><span>High</span>
-        </div>
-      </div>
-
-      <!-- Intent Display -->
-      <div class="intent-card" id="intent-card" style="display:none">
-        <div class="intent-label">Detected Intent</div>
-        <div class="intent-badge" id="intent-badge">—</div>
-      </div>
-
-      <!-- Sentiment Display -->
-      <div class="sentiment-card" id="sentiment-card" style="display:none">
-        <div class="sentiment-label">Customer Mood</div>
-        <div class="sentiment-badge" id="sentiment-badge">—</div>
-      </div>
-
-      <div class="sidebar-tips">
-        <div class="tips-header">💡 Pro Tips</div>
-        <ul>
-          <li>Mention <strong>order amount</strong> for faster refund</li>
-          <li>Name the <strong>restaurant</strong> for context</li>
-          <li>Describe <strong>exactly what went wrong</strong></li>
-          <li>Say "I want a human" to escalate instantly</li>
-        </ul>
-      </div>
-    </aside>
-
-    <!-- ── MAIN CHAT ────────────────────────────────────────────── -->
-    <main class="chat-area">
-
-      <!-- Top Bar -->
-      <header class="chat-header">
-        <div class="chat-header-left">
-          <button class="sidebar-toggle" id="sidebar-toggle" aria-label="Toggle sidebar">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
-          </button>
-          <div class="chat-title">
-            <span class="chat-name">AI Support Chat</span>
-            <span class="chat-sub" id="chat-sub">Multi-Agent · RAG · HITL</span>
-          </div>
-        </div>
-        <div class="chat-header-right">
-          <button class="header-btn" id="clear-btn" title="Clear conversation">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6M9 6V4h6v2"/></svg>
-            Clear
-          </button>
-        </div>
-      </header>
-
-      <!-- Messages -->
-      <div class="messages" id="messages">
-        <div class="msg-row bot">
-          <div class="avatar bot-avatar">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
-          </div>
-          <div class="msg-content">
-            <div class="bubble bot-bubble">
-              <p>👋 Hey! I'm <strong>SupportFlow AI</strong> — your intelligent food delivery support agent, powered by LLaMA 3.3 70B and a full multi-agent LangGraph pipeline.</p>
-              <p>Tell me your issue in plain English — <strong>no order ID needed</strong>. I understand context, emotion, and intent automatically.</p>
-              <p>I handle <strong>refunds</strong>, <strong>late deliveries</strong>, <strong>missing items</strong>, <strong>payment disputes</strong>, <strong>restaurant complaints</strong>, and more. For complex cases, I'll connect you with a real human agent instantly.</p>
-            </div>
-            <div class="msg-time">Just now</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Quick Scenarios -->
-      <div class="scenarios" id="scenarios">
-        <span class="scenarios-label">Try a scenario:</span>
-        <div class="scenario-chips">
-          <button class="chip" data-msg="My order from Dominos arrived 2 hours late and the pizza was completely cold. I paid Rs.450 and want a full refund.">🍕 Cold pizza, late delivery</button>
-          <button class="chip" data-msg="I was charged Rs.850 twice on my PhonePe for the same order worth Rs.425. Please help with the duplicate charge.">💳 Charged twice on PhonePe</button>
-          <button class="chip" data-msg="My order #ORD-88421 from Behrouz Biryani has been stuck on 'Preparing' for 75 minutes. No driver assigned, no update.">⏳ Order stuck on Preparing</button>
-          <button class="chip" data-msg="I ordered a combo meal but 3 items were missing from the bag — the garlic bread, drink, and dessert were not delivered.">📦 Items missing from bag</button>
-          <button class="chip" data-msg="I want to speak with a human agent immediately. My issue is very urgent.">👤 Connect human agent</button>
-        </div>
-      </div>
-
-      <!-- Input -->
-      <div class="input-zone">
-        <form class="input-form" id="chat-form">
-          <div class="input-wrapper">
-            <textarea
-              id="user-input"
-              class="user-input"
-              placeholder="Describe your issue... e.g. 'I ordered biryani for Rs.450, it arrived cold after 2 hours, I want a refund.'"
-              rows="1"
-              autocomplete="off"
-            ></textarea>
-            <div class="input-actions">
-              <button type="submit" class="send-btn" id="send-btn" aria-label="Send">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                  <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
-                </svg>
+            <div class="chat-header-right">
+              <button class="header-btn" id="clear-btn" title="Clear conversation">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6M9 6V4h6v2"/></svg>
+                Clear
               </button>
             </div>
+          </header>
+
+          <div class="messages" id="messages">
+            <div class="msg-row bot">
+              <div class="avatar bot-avatar">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+              </div>
+              <div class="msg-content">
+                <div class="bubble bot-bubble">
+                  <p>👋 Hey! I'm <strong>SupportFlow AI</strong> — your intelligent food delivery support agent, powered by LangGraph, live SQLite database grounding, and ChromaDB RAG.</p>
+                  <p>I automatically detect orders placed in the app! You can ask me about <strong>live order tracking</strong>, <strong>instant wallet refunds</strong>, <strong>missing or cold food</strong>, <strong>payment issues</strong>, or ask to speak with a human agent.</p>
+                </div>
+                <div class="msg-time">Just now</div>
+              </div>
+            </div>
           </div>
-          <div class="input-footer">
-            Powered by <strong>LangGraph</strong> · <strong>LLaMA 3.3 70B</strong> · <strong>ChromaDB RAG</strong> · <strong>Human-in-the-Loop</strong>
+
+          <!-- Quick Scenario Chips -->
+          <div class="scenarios" id="scenarios">
+            <span class="scenarios-label">Try a query:</span>
+            <div class="scenario-chips">
+              <button class="chip" data-msg="Where is my order right now? Can you check live status?">🛵 Track active delivery</button>
+              <button class="chip" data-msg="I want a refund for my past cold order.">🍕 Cold food refund</button>
+              <button class="chip" data-msg="I was charged twice on my UPI for the same order. Please help!">💳 Duplicate UPI charge</button>
+              <button class="chip" data-msg="My food has been stuck on Preparing for 45 minutes!">⏳ Stuck on Preparing</button>
+              <button class="chip" data-msg="I want to speak with a human agent immediately. My issue is very urgent.">👤 Connect human agent</button>
+            </div>
           </div>
-        </form>
+
+          <!-- Input Zone -->
+          <div class="input-zone">
+            <form class="input-form" id="chat-form">
+              <div class="input-wrapper">
+                <textarea
+                  id="user-input"
+                  class="user-input"
+                  placeholder="Ask about an order, refund, delivery partner, or food quality issue..."
+                  rows="1"
+                  autocomplete="off"
+                ></textarea>
+                <div class="input-actions">
+                  <button type="submit" class="send-btn" id="send-btn" aria-label="Send">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                      <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+              <div class="input-footer">
+                Powered by <strong>LangGraph</strong> · <strong>Groq Models</strong> · <strong>ChromaDB RAG</strong> · <strong>SQLite Grounding</strong>
+              </div>
+            </form>
+          </div>
+        </main>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- ── ORDER PLACED MODAL / TOAST ── -->
+  <div class="modal-backdrop" id="order-modal" style="display:none">
+    <div class="order-modal-card">
+      <div class="modal-badge-success">🎉 ORDER PLACED!</div>
+      <h3 class="modal-order-title" id="modal-dish-name">Special Chicken Biryani</h3>
+      <p class="modal-rest-name" id="modal-rest-name">from Meghana Foods</p>
+      
+      <div class="modal-order-details">
+        <div class="modal-detail-row">
+          <span>Order ID:</span> <strong id="modal-order-id">ORD-12345</strong>
+        </div>
+        <div class="modal-detail-row">
+          <span>Total Paid:</span> <strong id="modal-amount">₹350.00 (UPI)</strong>
+        </div>
+        <div class="modal-detail-row">
+          <span>Estimated Delivery:</span> <strong id="modal-eta">25-30 mins</strong>
+        </div>
+        <div class="modal-detail-row">
+          <span>Delivery Partner:</span> <strong id="modal-driver">Ramesh Kumar</strong>
+        </div>
       </div>
 
-    </main>
+      <div class="modal-actions">
+        <button class="btn-primary" onclick="goToTrackingFromModal()">🛵 View in Tracking</button>
+        <button class="btn-accent" onclick="askAiAboutOrderFromModal()">💬 Ask AI Support</button>
+        <button class="btn-secondary" onclick="closeOrderModal()">Continue Browsing</button>
+      </div>
+    </div>
   </div>
 
   <script src="/static/app.js"></script>

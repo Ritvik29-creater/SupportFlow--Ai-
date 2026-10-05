@@ -101,6 +101,24 @@ class Restaurant(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
 
     orders = relationship("Order", back_populates="restaurant")
+    menu_items = relationship("MenuItem", back_populates="restaurant", cascade="all, delete-orphan")
+
+
+class MenuItem(Base):
+    __tablename__ = "menu_items"
+
+    id = Column(String, primary_key=True, default=gen_uuid)
+    restaurant_id = Column(String, ForeignKey("restaurants.id"), nullable=False)
+    name = Column(String, nullable=False)
+    price = Column(Float, nullable=False)
+    description = Column(Text, nullable=True)
+    category = Column(String, default="Main Course")
+    is_veg = Column(Boolean, default=False)
+    rating = Column(Float, default=4.5)
+    image_emoji = Column(String, default="🍲")
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    restaurant = relationship("Restaurant", back_populates="menu_items")
 
 
 class Order(Base):
