@@ -1,0 +1,44 @@
+# SupportFlow AI — Dependencies
+fastapi>=0.110.0
+uvicorn[standard]>=0.28.0
+pydantic>=2.6.0
+pydantic-settings>=2.2.0
+
+# Database
+sqlalchemy>=2.0.28
+# psycopg2-binary>=2.9.9  # Only needed if using PostgreSQL instead of SQLite
+# alembic>=1.13.1          # Only needed for production DB migrations
+
+
+# Background Processing & Cache
+redis>=5.0.3
+rq>=1.16.1
+
+# Security & Auth
+python-jose[cryptography]>=3.3.0
+passlib[bcrypt]>=1.7.4
+bcrypt>=4.1.2
+pyjwt>=2.8.0
+python-multipart>=0.0.9
+python-dotenv>=1.0.1
+
+# LangGraph & Agentic Framework
+langgraph>=0.0.30
+langchain>=0.1.13
+langchain-core>=0.1.33
+langchain-community>=0.0.29
+langchain-groq>=0.1.0
+langchain-chroma>=0.1.0
+langchain-huggingface>=0.0.1
+langchain-text-splitters>=0.0.1
+
+# Vector DB & Embeddings
+chromadb>=0.4.24
+sentence-transformers>=2.5.1
+
+# Observability
+langsmith>=0.1.31
+
+# Testing & Dev
+pytest>=8.1.1
+httpx>=0.27.0
