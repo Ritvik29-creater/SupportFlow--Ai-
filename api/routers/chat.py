@@ -83,6 +83,9 @@ def chat(message: ChatMessage):
         "user_query": query,
         "session_id": session_id,
         "customer_id": "anonymous",
+        "order_id": message.order_id,
+        "image_base64": message.image_base64,
+        "image_type": message.image_type,
         "conversation_history": conversation_history,
         "force_escalate": False,
         "retrieved_docs": [],
@@ -130,7 +133,9 @@ def chat(message: ChatMessage):
         sentiment=sentiment_data.get("sentiment"),
         sentiment_urgency=sentiment_data.get("urgency"),
         agent_used=agent_metadata.get("specialized_agent"),
+        visual_assessment=result.get("visual_assessment"),
     )
+
 
 
 @router.delete("/session/{session_id}")

@@ -22,6 +22,7 @@ from agents.restaurant_agent import restaurant_agent
 from agents.delivery_partner_agent import delivery_partner_agent
 from agents.account_app_agent import account_app_agent
 from agents.coupon_offer_agent import coupon_offer_agent
+from agents.visual_verification_agent import visual_verification_agent
 from agents.confidence_agent import confidence_agent
 from agents.clarification_agent import clarification_agent
 from agents.escalation_agent import escalation_agent
@@ -30,8 +31,13 @@ from agents.escalation_agent import escalation_agent
 def route_by_intent(state: SupportState) -> str:
     """
     Route to a specialized agent based on detected intent.
+    If image evidence is provided, route directly to visual_verification_agent.
     Falls back to rag_agent for general_support or unknown.
     """
+    # Multimodal photo priority
+    if state.get("image_base64"):
+        return "visual_verification_agent"
+
     intent = state.get("intent", "unknown")
     routing_map = {
         "order_tracking":    "order_agent",
@@ -70,6 +76,7 @@ def build_graph():
     graph.add_node("delivery_partner_agent", delivery_partner_agent)
     graph.add_node("account_app_agent", account_app_agent)
     graph.add_node("coupon_offer_agent", coupon_offer_agent)
+    graph.add_node("visual_verification_agent", visual_verification_agent)
 
     # Post-processing nodes
     graph.add_node("confidence", confidence_agent)
@@ -87,14 +94,15 @@ def build_graph():
         "intent",
         route_by_intent,
         {
-            "order_agent":           "order_agent",
-            "payment_agent":         "payment_agent",
-            "refund_agent":          "refund_agent",
-            "restaurant_agent":      "restaurant_agent",
-            "delivery_partner_agent":"delivery_partner_agent",
-            "account_app_agent":     "account_app_agent",
-            "coupon_offer_agent":    "coupon_offer_agent",
-            "rag_agent":             "rag_agent",
+            "order_agent":               "order_agent",
+            "payment_agent":             "payment_agent",
+            "refund_agent":              "refund_agent",
+            "restaurant_agent":          "restaurant_agent",
+            "delivery_partner_agent":    "delivery_partner_agent",
+            "account_app_agent":         "account_app_agent",
+            "coupon_offer_agent":        "coupon_offer_agent",
+            "visual_verification_agent": "visual_verification_agent",
+            "rag_agent":                 "rag_agent",
         },
     )
 
@@ -102,9 +110,10 @@ def build_graph():
     for agent in [
         "rag_agent", "order_agent", "payment_agent", "refund_agent",
         "restaurant_agent", "delivery_partner_agent", "account_app_agent",
-        "coupon_offer_agent",
+        "coupon_offer_agent", "visual_verification_agent",
     ]:
         graph.add_edge(agent, "confidence")
+
 
     # ─── Confidence → final routing ───────────────────────────────────────────
     graph.add_conditional_edges(

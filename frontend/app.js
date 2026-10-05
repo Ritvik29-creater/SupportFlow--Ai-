@@ -24,6 +24,7 @@ const nodes = {
   intent:     document.getElementById("node-intent"),
   rag:        document.getElementById("node-rag"),
   specialist: document.getElementById("node-specialist"),
+  vision:     document.getElementById("node-vision"),
   confidence: document.getElementById("node-confidence"),
 };
 const descs = {
@@ -32,6 +33,7 @@ const descs = {
   intent:     document.getElementById("desc-intent"),
   rag:        document.getElementById("desc-rag"),
   specialist: document.getElementById("desc-specialist"),
+  vision:     document.getElementById("desc-vision"),
   confidence: document.getElementById("desc-confidence"),
 };
 
@@ -46,17 +48,28 @@ const sentimentBadge= document.getElementById("sentiment-badge");
 const statusInd     = document.getElementById("status-indicator");
 const statusLabel   = document.getElementById("status-label");
 
+// Photo upload refs
+const photoUploadBtn  = document.getElementById("photo-upload-btn");
+const photoFileInput  = document.getElementById("photo-file-input");
+const photoPreviewBar = document.getElementById("photo-preview-bar");
+const photoPreviewImg = document.getElementById("photo-preview-img");
+const photoPreviewTitle = document.getElementById("photo-preview-title");
+const photoRemoveBtn  = document.getElementById("photo-remove-btn");
+
+let currentAttachedImage = null; // { base64: string, type: string, name: string }
+
 // ── Intent metadata ───────────────────────────────────────────────────────────
 const INTENT_META = {
-  order_tracking:   { icon: "🛵", label: "Order Tracking",   agent: "Order Agent",    color: "#f59e0b" },
-  payment:          { icon: "💳", label: "Payment Issue",    agent: "Payment Agent",  color: "#3b82f6" },
-  refund:           { icon: "💰", label: "Refund Request",   agent: "Refund Agent",   color: "#22c55e" },
-  restaurant:       { icon: "🍽️", label: "Restaurant Issue", agent: "Restaurant Agent", color: "#f97316" },
-  delivery_partner: { icon: "🚴", label: "Delivery Partner", agent: "Partner Agent",  color: "#ef4444" },
-  account_app:      { icon: "📱", label: "Account & App",    agent: "App Agent",      color: "#8b5cf6" },
-  coupon_offer:     { icon: "🎟️", label: "Coupon & Offers",  agent: "Offers Agent",   color: "#ec4899" },
-  general_support:  { icon: "📚", label: "General Support",  agent: "RAG Agent",      color: "#94a3b8" },
-  unknown:          { icon: "❓", label: "Analyzing...",      agent: "RAG Agent",      color: "#94a3b8" },
+  order_tracking:      { icon: "🛵", label: "Order Tracking",      agent: "Order Agent",        color: "#f59e0b" },
+  payment:             { icon: "💳", label: "Payment Issue",       agent: "Payment Agent",      color: "#3b82f6" },
+  refund:              { icon: "💰", label: "Refund Request",      agent: "Refund Agent",       color: "#22c55e" },
+  restaurant:          { icon: "🍽️", label: "Restaurant Issue",    agent: "Restaurant Agent",   color: "#f97316" },
+  delivery_partner:    { icon: "🚴", label: "Delivery Partner",    agent: "Partner Agent",      color: "#ef4444" },
+  account_app:         { icon: "📱", label: "Account & App",       agent: "App Agent",          color: "#8b5cf6" },
+  coupon_offer:        { icon: "🎟️", label: "Coupon & Offers",     agent: "Offers Agent",       color: "#ec4899" },
+  visual_verification: { icon: "📸", label: "Visual Verification", agent: "Vision Agent",       color: "#a855f7" },
+  general_support:     { icon: "📚", label: "General Support",     agent: "RAG Agent",          color: "#94a3b8" },
+  unknown:             { icon: "❓", label: "Analyzing...",         agent: "RAG Agent",          color: "#94a3b8" },
 };
 
 const SENTIMENT_META = {
@@ -120,32 +133,85 @@ clearBtn.addEventListener("click", () => {
   sentimentCard.style.display = "none";
   scenarios.style.opacity = "1";
   scenarios.style.display = "";
+  if (photoPreviewBar) photoPreviewBar.style.display = "none";
+  currentAttachedImage = null;
   appendWelcome();
   fetch(`/api/chat/session/${SESSION_ID}`, { method: "DELETE" }).catch(() => {});
 });
+
+// ── Photo Upload Listeners ────────────────────────────────────────────────────
+if (photoUploadBtn && photoFileInput) {
+  photoUploadBtn.addEventListener("click", () => {
+    photoFileInput.click();
+  });
+
+  photoFileInput.addEventListener("change", (e) => {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+      const base64Data = evt.target.result;
+      currentAttachedImage = {
+        base64: base64Data,
+        type: file.type || "image/jpeg",
+        name: file.name
+      };
+      if (photoPreviewImg) photoPreviewImg.src = base64Data;
+      if (photoPreviewTitle) photoPreviewTitle.textContent = file.name;
+      if (photoPreviewBar) photoPreviewBar.style.display = "flex";
+      if (photoUploadBtn) photoUploadBtn.classList.add("has-photo");
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+if (photoRemoveBtn) {
+  photoRemoveBtn.addEventListener("click", () => {
+    currentAttachedImage = null;
+    if (photoFileInput) photoFileInput.value = "";
+    if (photoPreviewBar) photoPreviewBar.style.display = "none";
+    if (photoUploadBtn) photoUploadBtn.classList.remove("has-photo");
+  });
+}
 
 // ── Form submit ───────────────────────────────────────────────────────────────
 chatForm.addEventListener("submit", async (e) => {
   e.preventDefault();
   const query = userInput.value.trim();
-  if (!query || IS_WAITING) return;
+  const attachedImg = currentAttachedImage;
+
+  if ((!query && !attachedImg) || IS_WAITING) return;
+
+  const promptText = query || (attachedImg ? "Please verify this attached photo of my delivered food for damage and process the appropriate refund." : "");
 
   IS_WAITING = true;
   sendBtn.disabled = true;
   scenarios.style.display = "none";
 
-  appendUserMsg(query);
+  // Reset photo input UI
+  currentAttachedImage = null;
+  if (photoFileInput) photoFileInput.value = "";
+  if (photoPreviewBar) photoPreviewBar.style.display = "none";
+  if (photoUploadBtn) photoUploadBtn.classList.remove("has-photo");
+
+  appendUserMsg(promptText, attachedImg);
   userInput.value = "";
   userInput.style.height = "auto";
 
   const typingId = appendTyping();
-  animatePipeline();
+  animatePipeline(!!attachedImg);
 
   try {
     const res = await fetch(`/api/chat/`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ content: query, session_id: SESSION_ID }),
+      body: JSON.stringify({
+        content: promptText,
+        session_id: SESSION_ID,
+        image_base64: attachedImg ? attachedImg.base64 : null,
+        image_type: attachedImg ? attachedImg.type : null,
+      }),
     });
 
     removeTyping(typingId);
@@ -178,6 +244,7 @@ chatForm.addEventListener("submit", async (e) => {
   sendBtn.disabled = false;
   userInput.focus();
 });
+
 
 // ── Status ────────────────────────────────────────────────────────────────────
 function setOnline() {
@@ -216,7 +283,7 @@ function setNodeState(key, state, desc = null) {
   if (desc && descs[key]) descs[key].textContent = desc;
 }
 
-function animatePipeline() {
+function animatePipeline(hasPhoto = false) {
   resetPipeline();
 
   const schedule = (fn, delay) => {
@@ -229,19 +296,28 @@ function animatePipeline() {
   schedule(() => {
     setNodeState("guard", "done", "Input safe");
     setNodeState("sentiment", "running", "Analyzing emotion...");
-  }, 300);
+  }, 250);
   schedule(() => {
     setNodeState("sentiment", "done", "Emotion detected");
-    setNodeState("intent", "running", "Classifying intent...");
-  }, 700);
+    setNodeState("intent", "running", hasPhoto ? "Routing to Vision AI..." : "Classifying intent...");
+  }, 600);
   schedule(() => {
-    setNodeState("intent", "done", "Intent classified");
-    setNodeState("rag", "running", "Searching policies...");
-  }, 1200);
+    setNodeState("intent", "done", hasPhoto ? "Visual Proof Route" : "Intent classified");
+    if (hasPhoto) {
+      setNodeState("vision", "running", "Forensic visual scan...");
+    } else {
+      setNodeState("rag", "running", "Searching policies...");
+    }
+  }, 1000);
   schedule(() => {
-    setNodeState("rag", "done", "Docs retrieved");
-    setNodeState("specialist", "running", "Generating answer...");
-  }, 1800);
+    if (hasPhoto) {
+      setNodeState("vision", "done", "Visual evidence inspected");
+      setNodeState("specialist", "running", "Arbitrating refund decision...");
+    } else {
+      setNodeState("rag", "done", "Docs retrieved");
+      setNodeState("specialist", "running", "Generating answer...");
+    }
+  }, 1600);
   // specialist and confidence complete when response arrives
 }
 
@@ -253,6 +329,12 @@ function finishPipeline(data) {
   const meta = INTENT_META[intent] || INTENT_META.general_support;
 
   setNodeState("specialist", "done", "Answer generated");
+  if (data.visual_assessment) {
+    const va = data.visual_assessment;
+    setNodeState("vision", "done", va.damage_detected ? `${va.damage_type}` : "Food Intact");
+  } else {
+    setNodeState("vision", "idle", "No photo attached");
+  }
   setNodeState("confidence", "running", "Scoring quality...");
 
   const isEscalate = data.action === "escalate";
@@ -289,6 +371,7 @@ function finishPipeline(data) {
   }, 400);
 }
 
+
 function finishPipelineError() {
   _pipelineTimers.forEach(clearTimeout);
   _pipelineTimers = [];
@@ -323,13 +406,20 @@ function appendWelcome() {
   messages.appendChild(row);
 }
 
-function appendUserMsg(text) {
+function appendUserMsg(text, imageObj = null) {
   const row = document.createElement("div");
   row.className = "msg-row user";
+  let imgHtml = "";
+  if (imageObj && imageObj.base64) {
+    imgHtml = `<img src="${imageObj.base64}" class="msg-attached-img" alt="Attached food proof" />`;
+  }
   row.innerHTML = `
     <div class="avatar user-avatar">👤</div>
     <div class="msg-content">
-      <div class="bubble user-bubble">${escHtml(text)}</div>
+      <div class="bubble user-bubble">
+        ${imgHtml}
+        ${text ? `<div>${escHtml(text)}</div>` : ''}
+      </div>
       <div class="msg-time">${now()}</div>
     </div>
   `;
@@ -343,6 +433,54 @@ function appendBotMsg(text, meta = {}) {
 
   const intent = meta.intent || "general_support";
   const intMeta = INTENT_META[intent] || INTENT_META.general_support;
+
+  // Visual verification card
+  let visualCardHtml = "";
+  if (meta.visual_assessment) {
+    const va = meta.visual_assessment;
+    const isApproved = va.decision === "APPROVE_FULL_REFUND" || va.decision === "APPROVE_PARTIAL_REFUND";
+    const badgeClass = va.decision === "APPROVE_FULL_REFUND" ? "visual-badge-approved" : (va.decision === "APPROVE_PARTIAL_REFUND" ? "visual-badge-partial" : "visual-badge-rejected");
+    const fraudPct = Math.round((va.fraud_score !== undefined ? va.fraud_score : 0.1) * 100);
+    const fraudBarColor = fraudPct > 60 ? "#ef4444" : (fraudPct > 30 ? "#f59e0b" : "#22c55e");
+
+    const badgeTitle = va.decision === "APPROVE_FULL_REFUND"
+      ? "✅ 100% Genuine Damage Verified · Full Refund Approved"
+      : (va.decision === "APPROVE_PARTIAL_REFUND"
+        ? "⚠️ Moderate Defect Verified · 50% Credit Approved"
+        : "❌ Claim Rejected · Food Intact / Fraud Risk Flagged");
+
+    visualCardHtml = `
+      <div class="visual-verification-badge ${badgeClass}">
+        ${badgeTitle}
+      </div>
+      <div class="visual-card-grid">
+        <div class="visual-grid-item">
+          <span class="visual-grid-label">Physical Damage</span>
+          <span class="visual-grid-val">${escHtml(va.damage_type || 'None')} (${escHtml(va.damage_severity || 'none')})</span>
+        </div>
+        <div class="visual-grid-item">
+          <span class="visual-grid-label">Order Match</span>
+          <span class="visual-grid-val">${va.food_match ? '✅ Item Matched Bill' : '❌ Dish Mismatch'}</span>
+        </div>
+        <div class="visual-grid-item">
+          <span class="visual-grid-label">Tamper / Fraud Risk</span>
+          <span class="visual-grid-val" style="color: ${fraudBarColor};">${escHtml((va.fraud_risk || 'low').toUpperCase())} (${fraudPct}%)</span>
+        </div>
+        <div class="visual-grid-item">
+          <span class="visual-grid-label">Refund Action</span>
+          <span class="visual-grid-val" style="color: #4ade80;">${escHtml(va.calculated_refund || '₹0.00')}</span>
+        </div>
+      </div>
+      <div class="fraud-meter-wrap">
+        <div style="display:flex; justify-content:space-between; font-size:10px; color:var(--text-3); font-weight:600;">
+          <span>Authentic Delivery Proof</span><span>Tampering / Undamaged Food</span>
+        </div>
+        <div class="fraud-meter-bar">
+          <div class="fraud-meter-fill" style="width: ${fraudPct}%; background: ${fraudBarColor};"></div>
+        </div>
+      </div>
+    `;
+  }
 
   // Tags
   const tags = [];
@@ -411,7 +549,10 @@ function appendBotMsg(text, meta = {}) {
       </svg>
     </div>
     <div class="msg-content">
-      <div class="bubble bot-bubble">${fmtMarkdown(text)}</div>
+      <div class="bubble bot-bubble">
+        ${visualCardHtml}
+        ${fmtMarkdown(text)}
+      </div>
       ${chipsHtml}
       ${tagsHtml}
       ${escHtml_}
@@ -422,6 +563,7 @@ function appendBotMsg(text, meta = {}) {
   messages.appendChild(row);
   scrollDown();
 }
+
 
 window.sendQuickReply = function(msg) {
   if (IS_WAITING) return;
@@ -928,6 +1070,7 @@ async function loadOrders() {
                 </button>
               </div>
               <div class="complaint-quick-chips">
+                <button class="comp-chip photo-chip" onclick="triggerDeliveredPhotoUpload('${order.order_id}', '${escHtml((order.restaurant_name || '').replace(/'/g, "\\'"))}')">📷 Upload Photo Proof (Refund)</button>
                 <button class="comp-chip" onclick="complainWithReason('${order.order_id}', '${escHtml((order.restaurant_name || '').replace(/'/g, "\\'"))}', 'Food arrived cold & stale')">🍕 Cold Food</button>
                 <button class="comp-chip" onclick="complainWithReason('${order.order_id}', '${escHtml((order.restaurant_name || '').replace(/'/g, "\\'"))}', 'Items are missing from my order')">📦 Missing Item</button>
                 <button class="comp-chip" onclick="complainWithReason('${order.order_id}', '${escHtml((order.restaurant_name || '').replace(/'/g, "\\'"))}', 'Packaging was damaged and gravy spilled')">🥣 Spilled Gravy</button>
@@ -981,6 +1124,13 @@ function complainAboutDeliveredOrder(orderId, restName) {
   }, 200);
 }
 
+function triggerDeliveredPhotoUpload(orderId, restName) {
+  switchTab("chat");
+  setTimeout(() => {
+    window.triggerPhotoDemo('spilled', orderId, restName);
+  }, 200);
+}
+
 function complainWithReason(orderId, restName, reason) {
   switchTab("chat");
   setTimeout(() => {
@@ -1008,10 +1158,105 @@ function submitChatQuery(query) {
 }
 
 // ═══════════════════════════════════════════════════
+//   PHOTO PROOF DEMO GENERATOR (Instant Testing)
+// ═══════════════════════════════════════════════════
+window.triggerPhotoDemo = function(demoType, customOrderId = null, customRest = null) {
+  switchTab("chat");
+
+  const ordText = customOrderId ? `for my order ${customOrderId}${customRest ? ' from ' + customRest : ''}` : "for my delivered order";
+
+  let svgContent = "";
+  let promptText = "";
+  let fileName = "";
+
+  if (demoType === "spilled") {
+    fileName = "spilled_gravy_damage.png";
+    promptText = `My delivery ${ordText} arrived severely damaged! The curry container is cracked and gravy has completely spilled over the bag. Please verify this photo proof and approve my full refund.`;
+    svgContent = `<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300" viewBox="0 0 400 300">
+      <defs>
+        <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#1e1b4b"/><stop offset="100%" stop-color="#0f172a"/></linearGradient>
+        <linearGradient id="curry" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#ea580c"/><stop offset="100%" stop-color="#9a3412"/></linearGradient>
+      </defs>
+      <rect width="400" height="300" fill="url(#bg)"/>
+      <rect x="50" y="70" width="300" height="160" rx="14" fill="#334155" stroke="#ef4444" stroke-width="3" stroke-dasharray="6,6"/>
+      <path d="M70 180 Q140 220 230 210 Q320 200 340 250 L60 250 Z" fill="url(#curry)" opacity="0.85"/>
+      <circle cx="160" cy="225" r="18" fill="#c2410c"/>
+      <circle cx="210" cy="235" r="14" fill="#ea580c"/>
+      <path d="M120 75 L180 140 L160 170" stroke="#f87171" stroke-width="4" fill="none"/>
+      <text x="200" y="45" font-family="sans-serif" font-weight="bold" font-size="16" fill="#f87171" text-anchor="middle">⚠️ EVIDENCE: CRACKED CONTAINER &amp; SPILLED GRAVY</text>
+      <text x="200" y="120" font-family="sans-serif" font-size="14" fill="#e2e8f0" text-anchor="middle">Order Food Packaging: Severe Leakage</text>
+      <text x="200" y="280" font-family="monospace" font-size="12" fill="#fdba74" text-anchor="middle">Puddle volume: ~250ml · Packaging breach</text>
+    </svg>`;
+  } else if (demoType === "burnt") {
+    fileName = "burnt_pizza_crust.png";
+    promptText = `My pizza ${ordText} arrived completely burnt, blackened and completely inedible! Look at this photo of the charred crust and process my refund.`;
+    svgContent = `<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300" viewBox="0 0 400 300">
+      <defs>
+        <radialGradient id="burnt" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#18181b"/><stop offset="70%" stop-color="#27272a"/><stop offset="100%" stop-color="#451a03"/></radialGradient>
+      </defs>
+      <rect width="400" height="300" fill="#09090b"/>
+      <circle cx="200" cy="150" r="105" fill="url(#burnt)" stroke="#ef4444" stroke-width="4"/>
+      <circle cx="160" cy="130" r="22" fill="#000000"/>
+      <circle cx="235" cy="140" r="28" fill="#09090b"/>
+      <circle cx="190" cy="180" r="24" fill="#18181b"/>
+      <path d="M140 100 Q170 80 200 95 Q230 75 260 110" stroke="#71717a" stroke-width="3" stroke-dasharray="4,4" fill="none"/>
+      <text x="200" y="35" font-family="sans-serif" font-weight="bold" font-size="16" fill="#f87171" text-anchor="middle">🔥 DEFECT: CHARRED &amp; BURNT BEYOND CONSUMPTION</text>
+      <text x="200" y="280" font-family="sans-serif" font-size="13" fill="#cbd5e1" text-anchor="middle">Thermal Damage: 94% Charred Crust · Inedible</text>
+    </svg>`;
+  } else if (demoType === "intact") {
+    fileName = "intact_fresh_meal.png";
+    promptText = `I want to request a full refund ${ordText} claiming the food is completely ruined. Inspect my photo and refund.`;
+    svgContent = `<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300" viewBox="0 0 400 300">
+      <defs>
+        <radialGradient id="fresh" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#fef08a"/><stop offset="60%" stop-color="#f59e0b"/><stop offset="100%" stop-color="#d97706"/></radialGradient>
+      </defs>
+      <rect width="400" height="300" fill="#022c22"/>
+      <ellipse cx="200" cy="165" rx="110" ry="75" fill="url(#fresh)" stroke="#22c55e" stroke-width="3"/>
+      <circle cx="170" cy="155" r="10" fill="#15803d"/>
+      <circle cx="225" cy="150" r="8" fill="#166534"/>
+      <circle cx="200" cy="175" r="9" fill="#15803d"/>
+      <text x="200" y="40" font-family="sans-serif" font-weight="bold" font-size="16" fill="#4ade80" text-anchor="middle">🥗 PRISTINE &amp; INTACT FRESH MEAL (ZERO DEFECT)</text>
+      <text x="200" y="275" font-family="sans-serif" font-size="13" fill="#86efac" text-anchor="middle">Condition: Fresh, Untouched &amp; Edible · No Damage Visible</text>
+    </svg>`;
+  } else {
+    fileName = "unrelated_non_food.png";
+    promptText = `Here is my proof ${ordText}, give me an instant refund right now.`;
+    svgContent = `<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300" viewBox="0 0 400 300">
+      <rect width="400" height="300" fill="#1e293b"/>
+      <rect x="110" y="90" width="180" height="110" rx="16" fill="#475569" stroke="#94a3b8" stroke-width="3"/>
+      <text x="200" y="150" font-size="44" text-anchor="middle">👟</text>
+      <text x="200" y="45" font-family="sans-serif" font-weight="bold" font-size="16" fill="#f87171" text-anchor="middle">❌ NON-FOOD OBJECT (SNEAKERS / SHOES)</text>
+      <text x="200" y="245" font-family="sans-serif" font-size="13" fill="#cbd5e1" text-anchor="middle">Invalid Proof: Object detected is footwear, not food</text>
+    </svg>`;
+  }
+
+  const base64Data = "data:image/svg+xml;base64," + btoa(unescape(encodeURIComponent(svgContent)));
+
+  currentAttachedImage = {
+    base64: base64Data,
+    type: "image/svg+xml",
+    name: fileName
+  };
+
+  if (photoPreviewImg) photoPreviewImg.src = base64Data;
+  if (photoPreviewTitle) photoPreviewTitle.textContent = fileName;
+  if (photoPreviewBar) photoPreviewBar.style.display = "flex";
+  if (photoUploadBtn) photoUploadBtn.classList.add("has-photo");
+
+  userInput.value = promptText;
+  autoResize();
+
+  setTimeout(() => {
+    chatForm.dispatchEvent(new Event("submit"));
+  }, 300);
+};
+
+// ═══════════════════════════════════════════════════
 //   INITIALIZATION ON PAGE LOAD
 // ═══════════════════════════════════════════════════
 window.addEventListener("DOMContentLoaded", () => {
   loadRestaurants();
   updateOrdersBadge();
 });
+
 

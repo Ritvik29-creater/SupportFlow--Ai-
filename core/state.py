@@ -44,3 +44,9 @@ class SupportState(TypedDict, total=False):
     # Extra structured data from specialized agents
     # e.g., {"extracted_amount": "₹450", "issue_type": "cold_food", "complaint_severity": "moderate"}
     agent_metadata: Optional[Dict[str, Any]]
+
+    # ── Multimodal / Visual Evidence ──────────────────────────────────────────
+    order_id: Optional[str]
+    image_base64: Optional[str]
+    image_type: Optional[str]
+    visual_assessment: Optional[Dict[str, Any]]
