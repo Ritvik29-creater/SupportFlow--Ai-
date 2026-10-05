@@ -175,3 +175,40 @@ def get_order_tracking(
         "total_amount": f"₹{order.total_amount:.2f}",
     }
 
+
+@router.post("/{order_id}/deliver")
+def mark_order_delivered(
+    order_id: str,
+    db: Session = Depends(get_db),
+):
+    """
+    Mark an active order as Delivered (for live demo simulation and post-delivery complaints).
+    """
+    order = db.query(Order).filter(Order.id == order_id).first()
+    if not order:
+        clean_id = order_id.replace("#", "").strip()
+        order = db.query(Order).filter(Order.id.ilike(f"%{clean_id}%")).first()
+    if not order:
+        raise HTTPException(status_code=404, detail="Order not found")
+
+    order.status = OrderStatus.delivered
+    order.delivered_at = datetime.utcnow()
+    db.commit()
+
+    rest = db.query(Restaurant).filter(Restaurant.id == order.restaurant_id).first()
+    items = db.query(OrderItem).filter(OrderItem.order_id == order.id).all()
+
+    return {
+        "success": True,
+        "message": f"Order {order.id} marked as Delivered!",
+        "order": {
+            "order_id": order.id,
+            "status": "Delivered",
+            "restaurant_name": rest.name if rest else "Restaurant",
+            "delivered_at": order.delivered_at.strftime("%I:%M %p"),
+            "total_amount": f"₹{order.total_amount:.2f}",
+            "items": [it.item_name for it in items],
+        }
+    }
+
+

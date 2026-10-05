@@ -123,3 +123,29 @@ def process_instant_refund(order_id: str, reason: str, method: str = "wallet") -
         return {"success": False, "message": str(e)}
     finally:
         db.close()
+
+
+def mark_order_as_delivered(order_id: str) -> Optional[Dict[str, Any]]:
+    """Mark an order as delivered in SQLite and return full updated order details."""
+    db = SessionLocal()
+    try:
+        clean_id = order_id.replace("#", "").strip().upper()
+        order = db.query(Order).filter(Order.id == clean_id).first()
+        if not order:
+            order = db.query(Order).filter(Order.id.ilike(f"%{clean_id}%")).first()
+        if not order:
+            return None
+
+        from datetime import datetime
+        order.status = OrderStatus.delivered
+        order.delivered_at = datetime.utcnow()
+        db.commit()
+
+        return find_order_by_id(order.id)
+    except Exception as e:
+        db.rollback()
+        print(f"[Mark Delivered Error] {e}")
+        return None
+    finally:
+        db.close()
+

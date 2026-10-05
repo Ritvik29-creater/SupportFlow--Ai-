@@ -907,12 +907,41 @@ async function loadOrders() {
             </div>
           </div>
 
+          ${!isDelivered && !isCancelled ? `
+            <div class="simulate-deliver-bar">
+              <button class="btn-simulate-deliver" onclick="simulateDelivery('${order.order_id}')">
+                <span>🚀</span> Mark as Delivered (Simulate)
+              </button>
+            </div>
+          ` : ''}
+
+          ${isDelivered ? `
+            <div class="delivered-notice-badge">
+              <span>✅ Delivered Successfully</span>
+              <span class="report-window-tag">⏳ 24h complaint window open</span>
+            </div>
+            <div class="delivered-complaint-box">
+              <div class="complaint-box-header">
+                <span>Any issues with your delivered food?</span>
+                <button class="btn-complain-ai" onclick="complainAboutDeliveredOrder('${order.order_id}', '${escHtml((order.restaurant_name || '').replace(/'/g, "\\'"))}')">
+                  💬 Complain to AI Agent
+                </button>
+              </div>
+              <div class="complaint-quick-chips">
+                <button class="comp-chip" onclick="complainWithReason('${order.order_id}', '${escHtml((order.restaurant_name || '').replace(/'/g, "\\'"))}', 'Food arrived cold & stale')">🍕 Cold Food</button>
+                <button class="comp-chip" onclick="complainWithReason('${order.order_id}', '${escHtml((order.restaurant_name || '').replace(/'/g, "\\'"))}', 'Items are missing from my order')">📦 Missing Item</button>
+                <button class="comp-chip" onclick="complainWithReason('${order.order_id}', '${escHtml((order.restaurant_name || '').replace(/'/g, "\\'"))}', 'Packaging was damaged and gravy spilled')">🥣 Spilled Gravy</button>
+                <button class="comp-chip" onclick="complainWithReason('${order.order_id}', '${escHtml((order.restaurant_name || '').replace(/'/g, "\\'"))}', 'Poor food quality / spoiled food')">🤢 Bad Quality</button>
+              </div>
+            </div>
+          ` : ''}
+
           <div class="order-actions-bar">
             <button class="btn-order-track" onclick="askAiAboutOrder('${order.order_id}', 'track')">
-              <span>🛵</span> Track Status with AI
+              <span>${isDelivered ? '📋' : '🛵'}</span> ${isDelivered ? 'Delivery Summary' : 'Track Status with AI'}
             </button>
             <button class="btn-order-refund" onclick="askAiAboutOrder('${order.order_id}', 'refund')">
-              <span>💰</span> Refund / Issue
+              <span>💰</span> ${isDelivered ? 'Post-Delivery Refund' : 'Refund / Issue'}
             </button>
           </div>
         </div>
@@ -928,6 +957,35 @@ async function loadOrders() {
       </div>
     `;
   }
+}
+
+async function simulateDelivery(orderId) {
+  try {
+    const res = await fetch(`/api/orders/${orderId}/deliver`, { method: "POST" });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      alert("Failed to mark order as delivered: " + (err.detail || "Server error"));
+      return;
+    }
+    // Refresh orders and show quick confirmation
+    await loadOrders();
+  } catch (err) {
+    alert("Error simulating delivery: " + err.message);
+  }
+}
+
+function complainAboutDeliveredOrder(orderId, restName) {
+  switchTab("chat");
+  setTimeout(() => {
+    submitChatQuery(`My order ${orderId} from ${restName} was just delivered, but I have a complaint about the food quality and need a resolution.`);
+  }, 200);
+}
+
+function complainWithReason(orderId, restName, reason) {
+  switchTab("chat");
+  setTimeout(() => {
+    submitChatQuery(`My order ${orderId} from ${restName} was delivered, but ${reason}. Please process a refund or credit under the food quality policy.`);
+  }, 200);
 }
 
 function askAiAboutOrder(orderId, actionType) {

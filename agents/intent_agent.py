@@ -46,6 +46,11 @@ Q: "How do I apply Zomato Pro benefits?" → {"intent": "coupon_offer", "confide
 Q: "Cash on delivery option is not showing" → {"intent": "payment", "confidence": 0.88}
 Q: "Food poisoning from the burger I ordered yesterday" → {"intent": "restaurant", "confidence": 0.99}
 Q: "I need GST invoice for my order" → {"intent": "payment", "confidence": 0.85}
+Q: "What is the authentic recipe for Hyderabadi Dum Biryani?" → {"intent": "restaurant", "confidence": 0.98}
+Q: "How is Margherita D.O.C Pizza prepared and what ingredients are inside?" → {"intent": "restaurant", "confidence": 0.98}
+Q: "Which restaurant in Indiranagar has the best pizza or pasta?" → {"intent": "restaurant", "confidence": 0.96}
+Q: "My order was just delivered, but the food arrived cold and soggy" → {"intent": "restaurant", "confidence": 0.97}
+Q: "Recommend healthy high-protein meals from SupportFlow restaurants" → {"intent": "restaurant", "confidence": 0.95}
 """
 
 
@@ -68,7 +73,7 @@ Classify the customer's query into EXACTLY ONE intent:
 - order_tracking: order status, delivery tracking, stuck order, missing items, wrong items, delivery issues, driver location, delivery ETA
 - payment: charges, duplicate payment, overcharged, UPI issue, payment failed, surge fee, invoice, wallet, cash on delivery, GST, billing
 - refund: wants money back, cancellation refund, compensation, dispute resolution, refund status, refund not received
-- restaurant: food quality, stale food, wrong food, hygiene, restaurant complaint, menu issue, restaurant cancelled, food safety
+- restaurant: food quality, cold food, arrived cold, stale food, wrong food, hygiene, restaurant complaint, food safety, spilled packaging, recipe questions, how food is made, ingredients, cooking process, restaurant recommendations, menu inquiries, best dishes, dietary food questions
 - delivery_partner: rude delivery person, delivery partner behavior, driver not responding, wrong delivery, delivery partner complaint
 - account_app: app crash, login issues, account blocked, password reset, profile changes, address management, notifications, app bug
 - coupon_offer: promo code not working, discount not applied, cashback issue, Zomato Pro/Gold, subscription benefits

@@ -3,7 +3,11 @@ Knowledge Base Ingestion Script for SupportFlow AI
 Parses markdown documentation from data/docs and indexes into ChromaDB with HuggingFace embeddings.
 """
 import os
+import sys
 import glob
+
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")
 from langchain_community.document_loaders import TextLoader
 from langchain_text_splitters import MarkdownHeaderTextSplitter, RecursiveCharacterTextSplitter
 try:
