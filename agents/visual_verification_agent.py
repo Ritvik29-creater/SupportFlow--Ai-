@@ -153,7 +153,7 @@ def analyze_with_reasoning_llm(raw_bytes: bytes, image_meta: Dict[str, Any], ord
     order_id = order_info.get("order_id", "ORD-ACTIVE")
 
     # Forensic analysis prompt
-    prompt = f"""You are the Chief AI Food Safety & Visual Verification Inspector for SupportFlow (Zomato-grade food delivery).
+    prompt = f"""You are the Chief AI Food Safety & Visual Verification Inspector for SupportFlow (autonomous food delivery platform).
 A customer has submitted a photograph as visual evidence to support their refund/complaint claim.
 
 ORDER RECORD IN DATABASE:

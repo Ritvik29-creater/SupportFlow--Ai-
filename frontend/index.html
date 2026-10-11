@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SupportFlow — Zomato-grade Food Delivery & AI Agent</title>
+  <title>SupportFlow — Food Delivery AI Support Platform</title>
   <meta name="description" content="Agentic food delivery platform with 100+ restaurants, 1-tap ordering, and intelligent multi-agent customer support.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -210,12 +210,12 @@
 
             <div class="pipeline-connector"></div>
 
-            <div class="pipeline-node" id="node-vision" data-state="idle">
+            <div class="pipeline-node" id="node-resolution" data-state="idle">
               <div class="node-left">
-                <div class="node-icon">📸</div>
+                <div class="node-icon">⚖️</div>
                 <div class="node-info">
-                  <div class="node-name">Visual Verification</div>
-                  <div class="node-desc" id="desc-vision">Food & Fraud Inspection</div>
+                  <div class="node-name">Policy & Resolution</div>
+                  <div class="node-desc" id="desc-resolution">Restaurant & Situation Rules</div>
                 </div>
               </div>
               <div class="node-status-dot"></div>
@@ -262,7 +262,7 @@
           </div>
 
           <div class="sidebar-tips">
-            <div class="tips-header">💡 Zomato AI Capabilities</div>
+            <div class="tips-header">💡 SupportFlow AI Capabilities</div>
             <ul>
               <li>Tracks real orders from <strong>SQLite</strong></li>
               <li>Calculates refunds & credit timelines</li>
@@ -306,14 +306,16 @@
 
           <!-- Quick Scenario Chips -->
           <div class="scenarios" id="scenarios">
-            <span class="scenarios-label">Try asking anything or test AI visual verification:</span>
+            <span class="scenarios-label">Try asking anything or test interactive resolution:</span>
             <div class="scenario-chips">
-              <button class="chip visual-chip" onclick="window.triggerPhotoDemo('spilled')">📷 Proof: Spilled Food (Refund)</button>
-              <button class="chip visual-chip" onclick="window.triggerPhotoDemo('burnt')">🍕 Proof: Burnt Pizza</button>
-              <button class="chip visual-chip" onclick="window.triggerPhotoDemo('intact')">🛡️ Proof: Intact Food (Fraud Check)</button>
-              <button class="chip visual-chip" onclick="window.triggerPhotoDemo('shoes')">👟 Proof: Non-Food Photo</button>
+              <button class="chip" data-msg="My pizza from Domino's arrived cool and lukewarm. What is your refund policy?">🍕 Cold Pizza (25% Courtesy)</button>
+              <button class="chip" data-msg="The curry gravy from Meghana Foods leaked partially into the bag, but the biryani rice is still edible. What can you do?">🍛 Gravy Leaked in Bag (35% Partial)</button>
+              <button class="chip" data-msg="The curry was way too spicy and oily, I really didn't like the taste. Can I get a refund?">🌶️ Too Spicy / Taste Dislike (15% Coupon)</button>
+              <button class="chip" data-msg="My French fries and burger from Burger King arrived completely soggy and limp from steam. Can I get some credit?">🍟 Soggy Fries (20% Courtesy)</button>
+              <button class="chip" data-msg="My Death By Chocolate from Corner House arrived completely melted into warm soup! What is your policy?">🍨 Melted Ice Cream (Zero-Melt)</button>
+              <button class="chip" data-msg="Domino's delivered non-veg chicken pizza when I strictly ordered pure veg Margherita! Please help!">🚫 Non-Veg in Veg Order (100% + Safety)</button>
+              <button class="chip" data-msg="My order was missing the garlic breadsticks (Rs.120). Please refund for the missing item.">📦 Missing Single Item (Item-Level)</button>
               <button class="chip" data-msg="Where is my order right now? Can you check live status?">🛵 Track live order</button>
-              <button class="chip" data-msg="My delivered order arrived completely cold. Can I get an instant refund to my wallet?">🍕 Cold food refund</button>
               <button class="chip" data-msg="What is the authentic recipe and spices used for Hyderabadi Dum Biryani?">🍗 Dum Biryani recipe</button>
               <button class="chip" data-msg="Which restaurant has the best Biryani or Pizza in Bengaluru and what are their signature dishes?">🍽️ Best restaurants</button>
               <button class="chip" data-msg="I was charged twice on my UPI for the same order. Please help!">💳 Duplicate UPI charge</button>
@@ -323,31 +325,12 @@
 
           <!-- Input Zone -->
           <div class="input-zone">
-            <!-- Photo Attachment Preview Bar -->
-            <div class="photo-preview-bar" id="photo-preview-bar" style="display: none;">
-              <div class="photo-preview-thumb-wrap">
-                <img id="photo-preview-img" src="" alt="Proof Preview">
-                <button type="button" class="photo-preview-remove" id="photo-remove-btn" title="Remove photo">✕</button>
-              </div>
-              <div class="photo-preview-meta">
-                <div class="photo-preview-title" id="photo-preview-title">food_damage_proof.jpg</div>
-                <div class="photo-preview-sub">📷 Ready for Multimodal Damage & Fraud Verification</div>
-              </div>
-            </div>
-
             <form class="input-form" id="chat-form">
               <div class="input-wrapper">
-                <button type="button" class="photo-upload-btn" id="photo-upload-btn" title="Upload food photo for AI refund verification">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
-                    <circle cx="12" cy="13" r="4"/>
-                  </svg>
-                </button>
-                <input type="file" id="photo-file-input" accept="image/*" style="display:none;" />
                 <textarea
                   id="user-input"
                   class="user-input"
-                  placeholder="Ask about an order, refund, or attach food photo for visual proof..."
+                  placeholder="Describe your issue with an order, restaurant, or refund..."
                   rows="1"
                   autocomplete="off"
                 ></textarea>
@@ -360,7 +343,7 @@
                 </div>
               </div>
               <div class="input-footer">
-                Powered by <strong>LangGraph</strong> · <strong>Visual Inspection Agent</strong> · <strong>Groq Models</strong> · <strong>ChromaDB RAG</strong> · <strong>SQLite Grounding</strong>
+                Powered by <strong>LangGraph</strong> · <strong>Situation & Restaurant Policy Engine</strong> · <strong>Groq Models</strong> · <strong>ChromaDB RAG</strong> · <strong>SQLite Grounding</strong>
               </div>
             </form>
           </div>

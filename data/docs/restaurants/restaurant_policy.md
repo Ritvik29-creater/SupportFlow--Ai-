@@ -81,12 +81,12 @@ You can escalate to our Restaurant Quality Team:
 - Delivery time: 25-40 minutes
 - Whopper-specific: Large item, packaging may compress it — photo required for complaints
 
-### Swiggy Instamart (Quick Commerce)
+### SupportFlow Mart (Quick Commerce)
 - Specialty: Groceries, essentials, beverages
 - Delivery time: 10-20 minutes (hyperlocal)
 - Common issues: Wrong SKU/brand delivered, expiry date concerns — full refund eligible
 
-### Zomato Hyperpure Restaurant Supplies (B2B)
+### SupportFlow Kitchen Supplies (B2B)
 - Not directly applicable to consumer complaints
 
 ### Paradise Biryani
@@ -171,7 +171,7 @@ You can escalate to our Restaurant Quality Team:
 - Delivery time: 60-90 minutes (fresh sourcing)
 - Special note: Meat freshness guaranteed, full refund if quality issue within 2 hours
 
-### Zomato Gold Restaurant Partners
+### SupportFlow VIP Dining Partners
 - Premium restaurant partners with enhanced SLA
 - Escalation handled within 1 hour instead of standard 2-4 hours
 - Higher compensation rates for quality failures
@@ -266,7 +266,7 @@ You can escalate to our Restaurant Quality Team:
 - Delivery time: 20-30 minutes
 - Note: Milkshakes must be consumed immediately — no quality guarantee after 20 mins
 
-### Swiggy Pop / Zomato Everyday
+### SupportFlow Everyday Budget Meals
 - Specialty: Single-serving budget meals from dark kitchens
 - Delivery time: 20-30 minutes
 

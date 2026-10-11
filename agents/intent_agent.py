@@ -1,5 +1,5 @@
 """
-SupportFlow AI — Zomato-grade Intent Agent v2
+SupportFlow AI — Intent Agent v2
 Classifies customer intent with high accuracy using few-shot examples + sentiment context.
 Handles multi-turn conversations intelligently. Supports 8 intent categories.
 """
@@ -22,7 +22,7 @@ FOOD_DELIVERY_INTENTS = [
 # Comprehensive few-shot examples for maximum accuracy
 FEW_SHOT_EXAMPLES = """
 EXAMPLES:
-Q: "My order from Zomato is stuck on 'preparing' for 1 hour" → {"intent": "order_tracking", "confidence": 0.97}
+Q: "My order from SupportFlow is stuck on 'preparing' for 1 hour" → {"intent": "order_tracking", "confidence": 0.97}
 Q: "The biryani arrived completely cold after 90 minutes" → {"intent": "refund", "confidence": 0.93}
 Q: "I was charged twice on my PhonePe, Rs.450 twice" → {"intent": "payment", "confidence": 0.98}
 Q: "Food from KFC was stale and had a bad smell" → {"intent": "restaurant", "confidence": 0.94}
@@ -33,7 +33,7 @@ Q: "Restaurant cancelled my order after 45 minutes, I paid Rs.800" → {"intent"
 Q: "How do I change my delivery address?" → {"intent": "account_app", "confidence": 0.88}
 Q: "Why is there a surge fee on my bill?" → {"intent": "payment", "confidence": 0.92}
 Q: "The pizza had a cockroach inside, this is disgusting" → {"intent": "restaurant", "confidence": 0.99}
-Q: "I didn't get my Zomato gold discount" → {"intent": "coupon_offer", "confidence": 0.89}
+Q: "I didn't get my SupportFlow VIP discount" → {"intent": "coupon_offer", "confidence": 0.89}
 Q: "My money was deducted but order wasn't placed" → {"intent": "payment", "confidence": 0.97}
 Q: "Missing items - ordered 4 things, only got 2" → {"intent": "order_tracking", "confidence": 0.93}
 Q: "Want to know refund status for ticket TKT-1234" → {"intent": "refund", "confidence": 0.95}
@@ -42,7 +42,7 @@ Q: "Driver delivered to wrong person and is not responding" → {"intent": "deli
 Q: "My account got blocked, I can't log in" → {"intent": "account_app", "confidence": 0.95}
 Q: "The app keeps crashing when I try to order" → {"intent": "account_app", "confidence": 0.94}
 Q: "My promo code FLAT50 is not working" → {"intent": "coupon_offer", "confidence": 0.97}
-Q: "How do I apply Zomato Pro benefits?" → {"intent": "coupon_offer", "confidence": 0.91}
+Q: "How do I apply SupportFlow Pro benefits?" → {"intent": "coupon_offer", "confidence": 0.91}
 Q: "Cash on delivery option is not showing" → {"intent": "payment", "confidence": 0.88}
 Q: "Food poisoning from the burger I ordered yesterday" → {"intent": "restaurant", "confidence": 0.99}
 Q: "I need GST invoice for my order" → {"intent": "payment", "confidence": 0.85}
@@ -76,7 +76,7 @@ Classify the customer's query into EXACTLY ONE intent:
 - restaurant: food quality, cold food, arrived cold, stale food, wrong food, hygiene, restaurant complaint, food safety, spilled packaging, recipe questions, how food is made, ingredients, cooking process, restaurant recommendations, menu inquiries, best dishes, dietary food questions
 - delivery_partner: rude delivery person, delivery partner behavior, driver not responding, wrong delivery, delivery partner complaint
 - account_app: app crash, login issues, account blocked, password reset, profile changes, address management, notifications, app bug
-- coupon_offer: promo code not working, discount not applied, cashback issue, Zomato Pro/Gold, subscription benefits
+- coupon_offer: promo code not working, discount not applied, cashback issue, SupportFlow Pro/VIP, subscription benefits
 - general_support: everything else that doesn't fit above — policies, general questions, how-to
 - unknown: completely unclear, abusive, or off-topic
 

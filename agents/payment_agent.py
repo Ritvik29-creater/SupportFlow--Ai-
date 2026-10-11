@@ -1,5 +1,5 @@
 """
-SupportFlow AI — Zomato-grade Payment Agent
+SupportFlow AI — Payment Agent
 Handles payment disputes, duplicate charges, failed payments, billing questions.
 Provides precise, reassuring guidance without requesting sensitive information.
 """
@@ -76,7 +76,7 @@ def extract_payment_context(query: str) -> dict:
         method = "Credit Card"
     elif any(w in q_lower for w in ["debit card", "debit", "atm card"]):
         method = "Debit Card"
-    elif any(w in q_lower for w in ["wallet", "zomato money", "supportflow wallet"]):
+    elif any(w in q_lower for w in ["wallet", "credits", "supportflow wallet"]):
         method = "Wallet"
     elif any(w in q_lower for w in ["net banking", "netbanking", "bank transfer"]):
         method = "Net Banking"
@@ -101,7 +101,7 @@ def extract_payment_context(query: str) -> dict:
 
 
 def payment_agent(state: dict) -> dict:
-    """Handles payment and billing queries — Zomato-grade intelligence."""
+    """Handles payment and billing queries — SupportFlow intelligence."""
     history = state.get("conversation_history", [])
     history_text = ""
     if history:

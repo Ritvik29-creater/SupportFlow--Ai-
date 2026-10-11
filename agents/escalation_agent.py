@@ -1,5 +1,5 @@
 """
-SupportFlow AI — Zomato-grade Escalation Agent v2
+SupportFlow AI — Escalation Agent v2
 Creates human support tickets with full context, sentiment-aware priority.
 Generates empathetic, personalized escalation messages.
 Human-in-the-loop: saves ticket to DB for human agent review.
@@ -89,7 +89,7 @@ The message MUST:
 3. Reassure them a specialized human expert will personally handle it
 4. Show the ticket ID clearly (format: **Ticket: {ticket_id}**)
 5. State the exact response time clearly (format: **Response within: {response_time}**)
-6. Give them 1-2 practical tips while they wait (keep photo, note order details, etc.)
+6. Give them 1-2 practical tips while they wait (note order details, keep packaging closed, etc.)
 7. End warmly — tell them they can track the ticket in Help & Support → My Tickets
 8. For CRITICAL priority: add extra urgency and reassurance
 
@@ -108,8 +108,8 @@ Keep it under 180 words. Format key details with **bold**.
             f"**Created:** {timestamp}\n\n"
             f"A human support specialist will review your case and respond within **{response_time}** "
             f"via SMS + in-app notification.\n\n"
-            f"**While you wait:** Keep any photos or screenshots related to your issue — "
-            f"our agent may request them for faster resolution.\n\n"
+            f"**While you wait:** Note down any specific details about your order — "
+            f"our agent will review the database record for instant resolution.\n\n"
             f"**Track your ticket:** Help & Support → My Tickets → `{ticket_id}`"
         )
 

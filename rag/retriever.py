@@ -30,32 +30,77 @@ def load_vectorstore():
     return vectorstore
 
 
-_vectorstore = load_vectorstore()
+class FallbackRetriever:
+    """Fallback in-memory keyword retriever if Chroma / PyArrow cannot be initialized."""
+    def __init__(self, category_filter: str = None):
+        self.category_filter = category_filter
+        self.docs = []
+        import glob
+        from langchain_core.documents import Document
 
-# Standard similarity retriever — top 5 most relevant chunks
-retriever = _vectorstore.as_retriever(
-    search_type="similarity",
-    search_kwargs={"k": 5},
-)
+        base_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data", "docs")
+        if os.path.exists(base_dir):
+            for filepath in glob.glob(os.path.join(base_dir, "**", "*.md"), recursive=True):
+                cat = os.path.basename(os.path.dirname(filepath))
+                if category_filter and cat.lower() != category_filter.lower():
+                    continue
+                try:
+                    with open(filepath, "r", encoding="utf-8") as f:
+                        content = f.read()
+                        sections = content.split("## ")
+                        for idx, sec in enumerate(sections):
+                            sec_text = ("## " + sec) if idx > 0 else sec
+                            if sec_text.strip():
+                                self.docs.append(Document(
+                                    page_content=sec_text.strip(),
+                                    metadata={"source": filepath, "category": cat}
+                                ))
+                except Exception:
+                    pass
 
-# MMR retriever — maximizes relevance + diversity (avoids repetitive chunks)
-# fetch_k=15 candidates, pick best 6 with diversity penalty
-mmr_retriever = _vectorstore.as_retriever(
-    search_type="mmr",
-    search_kwargs={
-        "k": 6,           # Return 6 results
-        "fetch_k": 15,    # Fetch 15 candidates first
-        "lambda_mult": 0.7,  # 0.7 = balance between relevance and diversity
-    },
-)
+    def invoke(self, query: str):
+        query_words = set(query.lower().split())
+        scored = []
+        for doc in self.docs:
+            text = doc.page_content.lower()
+            score = sum(1 for w in query_words if w in text and len(w) > 2)
+            if score > 0:
+                scored.append((score, doc))
+        scored.sort(key=lambda x: x[0], reverse=True)
+        results = [doc for _, doc in scored[:5]]
+        if not results and self.docs:
+            results = self.docs[:3]
+        return results
+
+    def as_retriever(self, **kwargs):
+        return self
 
 
-def get_category_retriever(category: str):
-    """Get a retriever filtered by document category."""
-    return _vectorstore.as_retriever(
+try:
+    _vectorstore = load_vectorstore()
+    retriever = _vectorstore.as_retriever(
         search_type="similarity",
+        search_kwargs={"k": 5},
+    )
+    mmr_retriever = _vectorstore.as_retriever(
+        search_type="mmr",
         search_kwargs={
-            "k": 5,
-            "filter": {"category": category},
+            "k": 6,
+            "fetch_k": 15,
+            "lambda_mult": 0.7,
         },
     )
+    def get_category_retriever(category: str):
+        return _vectorstore.as_retriever(
+            search_type="similarity",
+            search_kwargs={
+                "k": 5,
+                "filter": {"category": category},
+            },
+        )
+except Exception as _load_err:
+    retriever = FallbackRetriever()
+    mmr_retriever = FallbackRetriever()
+    def get_category_retriever(category: str):
+        return FallbackRetriever(category_filter=category)
+

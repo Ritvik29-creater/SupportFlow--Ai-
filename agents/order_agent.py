@@ -1,5 +1,5 @@
 """
-SupportFlow AI — Zomato-grade Order Tracking Agent
+SupportFlow AI — Order Tracking Agent
 Handles delivery tracking, stuck orders, missing items, wrong orders, late deliveries.
 Gives actionable, real-time guidance like a live support agent.
 """
@@ -34,18 +34,16 @@ DELAY THRESHOLDS AND ACTIONS:
 ⏰ Stuck on "Preparing" 45+ min: Restaurant may have lost the order — escalate
 
 MISSING ITEMS ACTION PLAN:
-1. Take photos of received items immediately
-2. Orders → Report Issue → "Missing Items"
-3. Select each missing item individually
-4. Choose: instant wallet refund OR re-delivery (within 2km, within 30 min)
-5. Resolution: typically within 15-30 minutes
+1. Identify missing items from the delivery receipt
+2. State the missing item name and quantity in chat
+3. Instant resolution: item-level wallet refund + ₹30 delivery credit
+4. No photo proof required
 
 WRONG ORDER ACTION PLAN:
-1. Don't eat it (especially if allergen concern)
-2. Take photo of what you received
-3. Orders → Report Issue → "Received Wrong Order"
-4. Eligible for: full refund OR fresh re-delivery
-5. Wrong food is always a full refund case — no questions asked
+1. Don't eat it (especially if allergen/dietary concern)
+2. State what dish was delivered instead of your billed item
+3. Instant resolution: 100% full refund OR fresh replacement code
+4. No photo proof required — resolved conversationally
 
 IMPORTANT RULES:
 - Never ask for order ID if the customer has already described the issue clearly
@@ -100,7 +98,7 @@ def extract_order_context(query: str, history: list = None) -> dict:
 
 
 def order_agent(state: dict) -> dict:
-    """Handles order tracking, delivery issues, missing/wrong items — Zomato-grade."""
+    """Handles order tracking, delivery issues, missing/wrong items — SupportFlow-grade."""
     history = state.get("conversation_history", [])
     history_text = ""
     if history:
@@ -156,7 +154,7 @@ RECENT ORDERS FOUND IN CUSTOMER ACCOUNT:
 
     issue_guidance = {
         "missing_items": "Focus on: eligibility (always eligible), how to report missing items, offer partial refund or re-delivery",
-        "wrong_order": "Focus on: full refund eligibility, don't eat if allergen concern, photo proof needed, re-delivery option",
+        "wrong_order": "Focus on: full refund eligibility, don't eat if allergen concern, instant resolution without photos, re-delivery option",
         "stuck_order": "Focus on: when to call restaurant, when to cancel, when to escalate, refund eligibility",
         "cancelled_order": "Focus on: automatic full refund, timeline, no action needed from customer",
         "delivery_delay": "Focus on: steps to track, driver contact, when delay becomes refund-eligible",

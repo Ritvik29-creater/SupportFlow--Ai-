@@ -184,7 +184,8 @@ class ChatResponse(BaseModel):
     sentiment: Optional[str] = None          # Customer emotional state
     sentiment_urgency: Optional[str] = None  # low | medium | high
     agent_used: Optional[str] = None         # Which specialized agent handled it
-    visual_assessment: Optional[Dict[str, Any]] = None  # Multimodal inspection findings
+    visual_assessment: Optional[Dict[str, Any]] = None  # Legacy inspection findings
+    resolution_details: Optional[Dict[str, Any]] = None  # Situation & restaurant policy resolution
 
 
 

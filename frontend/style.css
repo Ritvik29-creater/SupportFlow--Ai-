@@ -1,12 +1,12 @@
 /* ═══════════════════════════════════════════════════
    SupportFlow AI v3 — Premium Glassmorphic UI
-   Food Delivery Support · Zomato-grade Design
+   Food Delivery Support · Modern Dark Theme Design
    ═══════════════════════════════════════════════════ */
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
-  /* Brand Colors — Zomato Red */
+  /* Brand Colors — SupportFlow Coral Red */
   --red:          #e23744;
   --red-dark:     #c42b38;
   --red-glow:     rgba(226, 55, 68, 0.4);

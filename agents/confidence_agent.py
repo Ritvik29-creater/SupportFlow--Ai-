@@ -1,5 +1,5 @@
 """
-SupportFlow AI — Zomato-grade Confidence Agent v2
+SupportFlow AI — Confidence Agent v2
 Scores answer quality and routes to: answer | clarify | escalate.
 Uses fast LLM-based scoring with context-aware thresholds and sentiment consideration.
 """

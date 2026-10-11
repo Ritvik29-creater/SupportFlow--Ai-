@@ -1,5 +1,5 @@
 """
-SupportFlow AI — Zomato-grade Clarification Agent
+SupportFlow AI — Clarification Agent
 Asks targeted, context-aware follow-up questions.
 Never redundantly asks for info the customer already provided.
 Smart enough to spot implicit context.
@@ -19,7 +19,7 @@ def extract_provided_info(query: str, history: list = None) -> dict:
     return {
         "has_amount": bool(re.search(r'(?:rs\.?|inr|₹)\s*\d+', combined, re.IGNORECASE)),
         "has_restaurant": any(r in q_lower for r in [
-            "dominos", "kfc", "mcdonald", "pizza hut", "behrouz", "zomato", "swiggy",
+            "dominos", "kfc", "mcdonald", "pizza hut", "behrouz", "meghana",
             "biryani", "restaurant", "burger king", "subway", "wow momo", "artisan", "napoli"
         ]),
         "has_order_id": bool(re.search(r'#?(ord-?\w+|\b\d{5,}\b)', combined, re.IGNORECASE)),
@@ -32,7 +32,7 @@ def extract_provided_info(query: str, history: list = None) -> dict:
 
 
 def clarification_agent(state: dict) -> dict:
-    """Generates a single, smart clarifying question — Zomato-grade conversation."""
+    """Generates a single, smart clarifying question — SupportFlow conversation."""
     history = state.get("conversation_history", [])
     history_text = ""
     if history:

@@ -134,6 +134,7 @@ def chat(message: ChatMessage):
         sentiment_urgency=sentiment_data.get("urgency"),
         agent_used=agent_metadata.get("specialized_agent"),
         visual_assessment=result.get("visual_assessment"),
+        resolution_details=result.get("resolution_details"),
     )
 
 

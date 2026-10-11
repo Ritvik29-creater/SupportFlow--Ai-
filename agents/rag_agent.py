@@ -1,5 +1,5 @@
 """
-SupportFlow AI — Zomato-grade RAG Agent v2
+SupportFlow AI — RAG Agent v2
 Retrieves relevant support documentation and generates highly accurate grounded answers.
 Features: MMR retrieval, query rewriting, multi-turn context, grounding check, sentiment-aware tone.
 """
@@ -53,8 +53,8 @@ def build_rag_prompt(query: str, context: str, history: list, intent: str, senti
     if urgency == "high":
         urgency_note = "\n⚡ URGENCY: HIGH — This customer needs quick, decisive action. Lead with the most important step first.\n"
 
-    return f"""You are SupportFlow's intelligent customer support AI — like Zomato's support bot, but smarter and more empathetic.
-You are trained to resolve food delivery issues with accuracy, empathy, and actionable advice.
+    return f"""You are SupportFlow's intelligent customer support AI — an expert, empathetic, and proactive food delivery assistant.
+You are trained to resolve customer issues with precision, warmth, and actionable advice.
 
 TONE GUIDANCE: {tone_modifier}
 {urgency_note}
