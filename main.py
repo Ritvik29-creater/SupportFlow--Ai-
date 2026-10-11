@@ -34,8 +34,5 @@ if st.button("Submit") and query.strip():
     st.subheader("Answer")
     st.write(result["answer"])
 
-    if "answer_confidence" in result:
-        st.metric("Confidence", round(result["answer_confidence"], 2))
-
     if result.get("action") == "escalate":
         st.error("Escalated to human support")

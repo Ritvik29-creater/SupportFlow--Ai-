@@ -127,7 +127,7 @@ def chat(message: ChatMessage):
         answer=result.get("answer", "I'm sorry, I couldn't process your request."),
         action=result.get("action", "escalate"),
         intent=result.get("intent", "unknown"),
-        confidence=result.get("answer_confidence"),
+        confidence=None,
         ticket_id=result.get("ticket_id"),
         session_id=session_id,
         sentiment=sentiment_data.get("sentiment"),
