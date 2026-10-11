@@ -38,9 +38,6 @@ const descs = {
 };
 
 // Side panel refs
-const confCard      = document.getElementById("conf-card");
-const confFill      = document.getElementById("conf-fill");
-const confPct       = document.getElementById("conf-pct");
 const intentCard    = document.getElementById("intent-card");
 const intentBadge   = document.getElementById("intent-badge");
 const sentimentCard = document.getElementById("sentiment-card");
@@ -263,27 +260,19 @@ function finishPipeline(data) {
   } else {
     setNodeState("resolution", "done", "Rules Verified");
   }
-  setNodeState("confidence", "running", "Scoring quality...");
+  setNodeState("confidence", "running", "Verifying resolution...");
 
   const isEscalate = data.action === "escalate";
 
   setTimeout(() => {
     setNodeState("confidence", isEscalate ? "error" : "done",
-      isEscalate ? "Escalating to human" : "High quality answer");
+      isEscalate ? "Escalating to human" : "Resolution Verified");
 
     // Update specialist node info
     const specIcon = document.getElementById("specialist-icon");
     const specName = document.getElementById("specialist-name");
     if (specIcon) specIcon.textContent = meta.icon;
     if (specName) specName.textContent = meta.agent;
-
-    // Confidence meter
-    if (data.confidence !== null && data.confidence !== undefined) {
-      const pct = Math.round(data.confidence * 100);
-      confCard.style.display = "block";
-      confPct.textContent = pct + "%";
-      setTimeout(() => { confFill.style.width = pct + "%"; }, 50);
-    }
 
     // Intent card
     intentCard.style.display = "block";
@@ -397,11 +386,6 @@ function appendBotMsg(text, meta = {}) {
   const tags = [];
   if (meta.intent && meta.intent !== "unknown") {
     tags.push(`<span class="tag tag-intent">${intMeta.icon} ${intMeta.label}</span>`);
-  }
-  if (meta.confidence !== null && meta.confidence !== undefined) {
-    const pct = Math.round(meta.confidence * 100);
-    const cls = pct >= 70 ? "" : pct >= 45 ? " mid" : " low";
-    tags.push(`<span class="tag tag-confidence${cls}">🎯 ${pct}%</span>`);
   }
   if (meta.agent_used) {
     tags.push(`<span class="tag tag-agent">🤖 ${meta.agent_used.replace("_", " ")}</span>`);
